@@ -17,11 +17,6 @@ data class Match(
     val time: Long
 )
 
-data class MatchViewModel(
-    val Match: Match,
-    var Selected: Boolean = false
-)
-
 data class Clan(
     val country: String,
     val id: Int,

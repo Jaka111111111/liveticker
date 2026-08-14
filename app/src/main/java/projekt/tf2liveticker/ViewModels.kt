@@ -7,9 +7,16 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 
+
+class MatchViewModel(
+    val match: Match
+) {
+    var selected by mutableStateOf(false)
+}
 class MainViewModel: ViewModel()
 {
-    val selectedMatches = mutableListOf<Int>()
+    var matchViewModels by mutableStateOf<List<MatchViewModel>>(emptyList())
+        private set
 
     var matches by mutableStateOf<List<Match>>(emptyList())
         private set
@@ -20,16 +27,6 @@ class MainViewModel: ViewModel()
     var error by mutableStateOf<String?>(null)
         private set
 
-    fun toggleMatchSelect(id: Int) {
-        var found = false
-        selectedMatches.forEach {
-            if (it == id) {
-                selectedMatches.remove(it)
-                found = true
-            }
-        }
-        if (!found) { selectedMatches.add(id) }
-    }
 
     fun getMatches() {
         viewModelScope.launch {
@@ -37,11 +34,25 @@ class MainViewModel: ViewModel()
             error = null
 
             try {
-
+//
+//                val response = RetrofitInstance.api.getMatches()
+//
+//                matches = response.results.data
+//
+//                matchViewModels = response.results.data.map{
+//                    MatchViewModel(it)
+//                }
                 val response = RetrofitInstance.api.getMatches()
 
                 matches = response.results.data
 
+                val oldViewModels = matchViewModels.associateBy { it.match.id }
+
+                matchViewModels = response.results.data.map { match ->
+
+                    oldViewModels[match.id]
+                        ?: MatchViewModel(match)
+                }
 
             } catch (e: Exception) {
 
