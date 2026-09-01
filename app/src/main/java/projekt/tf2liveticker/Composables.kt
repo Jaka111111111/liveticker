@@ -1,17 +1,19 @@
 package projekt.tf2liveticker
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -23,13 +25,25 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color.Companion.Magenta
+import androidx.compose.ui.graphics.Color.Companion.White
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.graphics.toColor
+import dev.chrisbanes.accompanist.coil.CoilImage
+import projekt.tf2liveticker.Models.MatchData
+import projekt.tf2liveticker.ViewModels.MainViewModel
+
 @Composable
 fun MatchScreen(
     mvm: MainViewModel = viewModel()
 ) {
-    val matchViewModels = mvm.matchViewModels
+    val matchViewModels = mvm.matchData
     val loading = mvm.loading
     val error = mvm.error
+    val context = LocalContext.current
+    var dummylog by remember { mutableStateOf("") }
+    val msr = MatchStorageRepository(context)
 
     var filter by remember { mutableStateOf(0) }
 
@@ -71,15 +85,25 @@ fun MatchScreen(
             }
 
         }
+        Row(verticalAlignment = Alignment.Top) {
+            OutlinedTextField(
+                value = dummylog,
+                onValueChange = { dummylog = it },
+                label = { Text("...") },
+                shape = RoundedCornerShape(12.dp)
+            )
+            Button(onClick = {mvm.refreshResultsDummy(context, dummylog.toInt())}) {
+                Text("Find")
+            }
+        }
         LazyColumn(
             modifier = Modifier.fillMaxSize()
         ) {
-
             items(matchViewModels) { matchVM ->
 
                 if (filter == 0 || matchVM.selected) {
                     MatchOverview(
-                        matchvm = matchVM
+                        matchvm = matchVM, mvm
                     )
                 }
             }
@@ -87,41 +111,80 @@ fun MatchScreen(
         }
     }
 }
-    @Composable
-    fun MatchOverview(matchvm: MatchViewModel) {
 
-        Column(
+@Composable
+fun TeamAvatar(data: String) {
+    CoilImage(
+        data = data,
+        contentDescription = "android",
+        alignment = Alignment.TopCenter,
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(.60f),
+        contentScale = ContentScale.Crop,
+        loading = {
+            Box(
+                modifier = Modifier.background(
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color.White
+                )
+            )
+        },
+        error = {
+            Box(
+                modifier = Modifier.background(
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color.White
+                )
+            )
+        }
+    )
+}
+
+@Composable
+fun MatchOverview(matchvm: MatchData, mvm: MainViewModel)
+{
+
+    val context = LocalContext.current
+
+    Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp).background(color = Color.Blue)
-        ) {
+                .padding(10.dp).background(color = androidx.compose.ui.graphics.Color(0xFF6750A4))
+        )
+    {
+        Text(
+            text = matchvm.match.competition.name, color = White
+        )
 
-            Text(
-                text = matchvm.match.competition.name
-            )
+        Text(
+            text = "${matchvm.match.clan1.name} vs ${matchvm.match.clan2.name}", color = White
+        )
 
-            Text(
-                text = "${matchvm.match.clan1.name} vs ${matchvm.match.clan2.name}"
-            )
-
-            Text(
-                text = "${
-                    java.time.format.DateTimeFormatter.ISO_INSTANT
-                        .format(java.time.Instant.ofEpochSecond(matchvm.match.time))
-                }"
-            )
-
-            Button(
-                onClick = {
-                    matchvm.selected = !matchvm.selected
-                }
-            ) {
+        Text(
+            text = "${
+                java.time.format.DateTimeFormatter.ISO_INSTANT
+                    .format(java.time.Instant.ofEpochSecond(matchvm.match.time))
+            }", color = White
+        )
+        Button(
+            onClick = {
+                matchvm.selected = !matchvm.selected
+                mvm.getParticipants(matchvm)
                 if (matchvm.selected) {
-                    Text("Dont care")
-                } else {
-                    Text("Notify me")
+                    mvm.scheduleMatch(
+                        context,
+                        matchvm.match
+                    )
+
                 }
+            }
+        ) {
+            if (matchvm.selected) {
+                Text("Dont care")
+            } else {
+                Text("Notify me")
             }
         }
     }
-
+}

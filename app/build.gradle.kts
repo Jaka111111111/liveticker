@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
+    kotlin("plugin.serialization") version "2.4.10"
 }
 
 android {
@@ -39,11 +40,20 @@ android {
 }
 
 dependencies {
+    implementation("androidx.datastore:datastore-preferences:1.2.1")
+
+    implementation("androidx.datastore:datastore:1.2.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.5")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.10")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation("androidx.work:work-runtime-ktx:2.11.2")
+    implementation("com.squareup.okhttp3:logging-interceptor:5.1.0")
+    implementation("dev.chrisbanes.accompanist:accompanist-coil:0.6.1")
     //implementation(libs.androidx.runtime)
     testImplementation(libs.junit)
     implementation(libs.androidx.core.ktx)
