@@ -1,6 +1,7 @@
 package projekt.tf2liveticker
 
 import android.content.Context
+import android.util.Log
 import androidx.work.Constraints
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
@@ -9,10 +10,11 @@ import androidx.work.workDataOf
 import projekt.tf2liveticker.Models.Clan
 import projekt.tf2liveticker.Models.Competition
 import projekt.tf2liveticker.Models.Division
+import projekt.tf2liveticker.Models.MapData
 import projekt.tf2liveticker.Models.Match
 import projekt.tf2liveticker.Models.MatchData
-import projekt.tf2liveticker.Models.MatchDataList
 import projekt.tf2liveticker.Models.Player
+import projekt.tf2liveticker.Models.TeamData
 import java.util.concurrent.TimeUnit
 
 class MatchRepository() {
@@ -23,16 +25,19 @@ class MatchRepository() {
     var matches: List<Match> = emptyList()
         private set
 
-//    suspend fun getTeam(id: Int): ApiResponse {
-//        return RetrofitEtf2lInstance.etf2l_api.getTeam(id)
-//    }
-
     suspend fun findLiveLog(matchData: MatchData) {
 
-        if (matchData.livelog == 0) {
-            matchData.players_team1.forEach { player ->
+        if (matchData.mutableMapDataList.last().LogID == 0) {
 
-                val response = RetrofitLogInstance.log_api.getRecentLogs(player.steam?.id)
+            if(matchData.team1.players.size == 0) {
+                getParticipants(matchData)
+            }
+            Log.d("findLiveLog", "team1: ${matchData.team1.players.size}")
+            Log.d("findLiveLog", "team2: ${matchData.team2.players.size}")
+
+            matchData.team1.players.forEach { player ->
+
+                val response = RetrofitLogInstance.log_api.getRecentLogs(player.steam?.id64)
                 val latest = RetrofitLogInstance.log_api.getResults(response.logs.logs[0].id)
                 var counter = 0
                 val players = latest.players.map { (steam3Id, stats) ->
@@ -50,28 +55,34 @@ class MatchRepository() {
 
                 players.forEach { player ->
                     val id = player.steam3Id
-                    matchData.players_team1.forEach {
+
+                    matchData.team1.players.forEach {
                         if (it.steam?.id3 == id) {
-                            matchData.team1_colour = player.team
+                            if (player.team == "red") {
+                                matchData.mutableMapDataList.last().red_team = matchData.team1.id
+                                matchData.mutableMapDataList.last().blue_team = matchData.team2.id
+                            }
+                            counter++
+                        }
+                    }
+
+                    matchData.team2.players.forEach {
+                        if (it.steam?.id3 == id) {
+                            if (player.team == "red") {
+                                matchData.mutableMapDataList.last().red_team = matchData.team2.id
+                                matchData.mutableMapDataList.last().blue_team = matchData.team1.id
+                            }
                             counter++
                         }
                     }
                 }
 
                 if (counter >= 8) {
-                    matchData.livelog = response.logs.logs[0].id
+                    matchData.mutableMapDataList.last().LogID = response.logs.logs[0].id
                 }
             }
         }
     }
-
-    suspend fun saveMatch(
-        context: Context,
-        matchDataList: MatchDataList
-    ) {
-        //MatchStorageRepository
-    }
-
 
     suspend fun refreshResultsDummy(context: Context, logId: Int) {
 //        val response = RetrofitLogInstance.log_api.getResults(logId)
@@ -83,10 +94,13 @@ class MatchRepository() {
         val d = Division(9, "hi", 1, 1)
         val ms = emptyList<String>()
         val m = Match(logId, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
-        val md = MatchData(m)
+        val md = MatchData(m, bestOf = 1, team1 = TeamData(id = 0), team2 = TeamData(1))
         md.selected = true
-        md.livelog = logId
+        md.mutableMapDataList.add(MapData(LogID = logId))
         this.matchData += md
+        val storageRepository =
+            MatchStorageRepository(context)
+        storageRepository.saveMatch(md)
 
         scheduleMatch(context, m)
 
@@ -94,71 +108,105 @@ class MatchRepository() {
 
     suspend fun refreshResults(matchData: MatchData?) {
         if (matchData!!.selected) { //&& matchData.match.time * 1000L < System.currentTimeMillis()
-            if (matchData.livelog == 0) {
+            if (matchData.getLatestMap().LogID == 0) {
                 findLiveLog(matchData)
             }
-            val response = RetrofitLogInstance.log_api.getResults(matchData.livelog)
-            matchData.length = response.length
-            matchData.red_score = response.teams["Red"]?.score!!
-            matchData.blue_score = response.teams["Blue"]?.score!!
-            //scheduleMatch(LocalContext.current, it.match.time)
+            if (matchData.mutableMapDataList.last().LogID != 0) {
+                val response = RetrofitLogInstance.log_api.getResults(matchData.mutableMapDataList.last().LogID)
+                var latestMap = matchData.getLatestMap()
+                latestMap.updated = false
+                if (latestMap.length != response.length) {
+                    latestMap.updated = true
+                    latestMap.lastUpdated = System.currentTimeMillis()
+
+                    if (latestMap.red_score + latestMap.blue_score == response.teams["Red"]?.score!! + response.teams["Blue"]?.score!!) {
+                        latestMap.mapEnded = true
+                    }
+                }
+
+                if ((System.currentTimeMillis() - latestMap.lastUpdated) / 1000 > 1200) {
+                    latestMap.mapEnded = true
+                }
+
+                latestMap.length = response.length
+                latestMap.red_score = response.teams["Red"]?.score!!
+                latestMap.blue_score = response.teams["Blue"]?.score!!
+
+                if (latestMap.red_score == latestMap.blue_score) {
+                    latestMap.winner = "tie"
+                }
+                else if (latestMap.red_score > latestMap.blue_score) {
+                    latestMap.winner = "red"
+                }
+                else {
+                    latestMap.winner = "blue"
+                }
+
+                if (latestMap.mapEnded) {
+                    if (latestMap.winner.equals("red")) { //diggaaaaaaaaa
+                        matchData.red_score++
+                    }
+                    else if (latestMap.winner.equals("blue")) {
+                        matchData.blue_score++
+                    }
+                }
+
+                if (latestMap.mapEnded && (matchData.red_score == matchData.mapsNeededToWin
+                            || matchData.blue_score == matchData.mapsNeededToWin)) {
+                    matchData.matchEnded = true
+                    }
+            }
         }
     }
 
-    suspend fun getMatches() {
-
+    suspend fun getMatches(context: Context) {
+        val storageRepository = MatchStorageRepository(context)
         val response = RetrofitEtf2lInstance.etf2l_api.getMatches()
         matches = response.results.data
-        val oldViewModels = matchData.associateBy { it.match.id }
-        this.matchData = response.results.data.map { match ->
-            oldViewModels[match.id]
-                ?: MatchData(match)
+        for (m in matches) {
+            storageRepository.saveMatch(MatchData(m, team1 = TeamData(), team2 = TeamData()))
         }
+        storageRepository.addDummyData()
+        matchData = storageRepository.getAllMatches()
+        matchData.first().observableSelected
+
     }
 
     suspend fun scheduleMatch(
         context: Context,
         match: Match
     ) {
-        match.time += 60
-        //saveMatch(context, MatchDataList(MatchData = matchData))
-
+        Log.e("WORKER", "1 - scheduleMatch gestartet")
         val matchTimeMillis = match.time * 1000L
-
+        Log.e("WORKER", "2 - Zeit berechnet: $matchTimeMillis")
         val delay = matchTimeMillis - System.currentTimeMillis()
-
-//        if (delay <= 0) {
-//            return
-//        }
-
-
-
+        Log.e("WORKER", "3 - Delay: $delay")
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
-
+        Log.e("WORKER", "4 - Constraints erstellt")
         val inputData = workDataOf(
             "MATCH_ID" to match.id
         )
-
-        val request = OneTimeWorkRequestBuilder<Worker>()
+        Log.e("WORKER", "5 - InputData erstellt")
+        val request = OneTimeWorkRequestBuilder<MatchUpdateWorker>()
             .setInitialDelay(delay, TimeUnit.MILLISECONDS) //DELAY
             .setInputData(inputData)
             .setConstraints(constraints)
             .build()
-
+        Log.e("WORKER", "6 - WorkRequest erstellt")
         WorkManager
             .getInstance(context)
             .enqueue(request)
-
+        Log.e("WORKER", "7 - Worker eingeplant")
     }
 
     suspend fun getParticipants(matchData: MatchData) {
 
         val team1 = RetrofitEtf2lInstance.etf2l_api.getTeam(id = matchData.match.clan1.id)
-        matchData.players_team1 = team1.team.players
+        matchData.team1.players = team1.team.players
         val team2 = RetrofitEtf2lInstance.etf2l_api.getTeam(id = matchData.match.clan2.id)
-        matchData.players_team2 = team2.team.players
+        matchData.team2.players = team2.team.players
 
     }
 

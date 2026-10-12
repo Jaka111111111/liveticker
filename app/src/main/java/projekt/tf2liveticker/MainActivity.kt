@@ -7,11 +7,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.datastore.dataStore
 import projekt.tf2liveticker.Models.MatchDataList
+import projekt.tf2liveticker.ViewModels.MainViewModel
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
 
         NotificationHelper.createNotificationChannel(this)
 
@@ -32,9 +34,9 @@ class MainActivity : ComponentActivity() {
 
 
     suspend fun updateMatchData(matchDataList: MatchDataList) {
-        dataStore.updateData { matchDataList }
+        matchDataStore.updateData { matchDataList }
     }
 }
 
 
-val Context.dataStore by dataStore("MatchData.json", MatchDataSerializer)
+//val Context.dataStore by dataStore("MatchData.json", MatchDataSerializer)

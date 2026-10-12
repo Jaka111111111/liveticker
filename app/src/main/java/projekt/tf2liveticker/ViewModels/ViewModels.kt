@@ -1,11 +1,13 @@
 package projekt.tf2liveticker.ViewModels
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
 import projekt.tf2liveticker.Models.Match
 import projekt.tf2liveticker.Models.MatchData
@@ -16,7 +18,9 @@ import projekt.tf2liveticker.Models.Competition
 import projekt.tf2liveticker.Models.Division
 
 class MainViewModel : ViewModel() {
+
     private val repository = MatchRepository()
+
     var matchData by mutableStateOf<List<MatchData>>(emptyList())
         private set
 
@@ -64,7 +68,7 @@ class MainViewModel : ViewModel() {
                 val ms = emptyList<String>()
                 val m = Match(logID, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
 
-                scheduleMatch(context, m, logID)
+                selectMatch(context, m, logID)
 
                 repository.refreshResultsDummy(context, logID)
 
@@ -76,29 +80,31 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun scheduleMatch(
+    fun selectMatch(
         context: Context,
         match: Match,
-        dummylivelog: Int = 0
+        dummylivelog: Int = 0,
+        selected: Boolean = true
     ) {
         viewModelScope.launch {
             loading = true
             error = null
 
             try {
+
                 val storageRepository =
                     MatchStorageRepository(context)
-
                 val md = MatchData(
-                    match = match,
+                    match = match
                 )
-                md.livelog = dummylivelog
-                md.selected = true
+                md.selected = selected
+                md.observableSelected = selected
+                md.getLatestMap().LogID = dummylivelog
+                storageRepository.updateMatch(md)
 
-                storageRepository.saveMatch(
-                    md
-                )
-                repository.scheduleMatch(context, match)
+                if (md.selected) {
+                    repository.scheduleMatch(context, match)
+                }
 
             } catch (e: Exception) {
                 error = e.message ?: "Unbekannter Fehler"
@@ -108,14 +114,14 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun getMatches() {
+    fun getMatches(context: Context) {
         viewModelScope.launch {
             loading = true
             error = null
 
             try {
 
-                repository.getMatches()
+                repository.getMatches(context)
 
                 matches = repository.matches
 

@@ -25,25 +25,21 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color.Companion.Magenta
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.graphics.toColor
 import dev.chrisbanes.accompanist.coil.CoilImage
 import projekt.tf2liveticker.Models.MatchData
 import projekt.tf2liveticker.ViewModels.MainViewModel
 
 @Composable
-fun MatchScreen(
-    mvm: MainViewModel = viewModel()
-) {
+fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
+{
     val matchViewModels = mvm.matchData
     val loading = mvm.loading
     val error = mvm.error
     val context = LocalContext.current
     var dummylog by remember { mutableStateOf("") }
-    val msr = MatchStorageRepository(context)
 
     var filter by remember { mutableStateOf(0) }
 
@@ -57,7 +53,7 @@ fun MatchScreen(
             Button(
                 onClick = {
                     filter = 0
-                    mvm.getMatches()
+                    mvm.getMatches(context)
                 }
             ) {
                 Text("Upcoming Matches")
@@ -101,7 +97,7 @@ fun MatchScreen(
         ) {
             items(matchViewModels) { matchVM ->
 
-                if (filter == 0 || matchVM.selected) {
+                if (filter == 0 || matchVM.observableSelected) {
                     MatchOverview(
                         matchvm = matchVM, mvm
                     )
@@ -169,18 +165,15 @@ fun MatchOverview(matchvm: MatchData, mvm: MainViewModel)
         )
         Button(
             onClick = {
-                matchvm.selected = !matchvm.selected
-                mvm.getParticipants(matchvm)
-                if (matchvm.selected) {
-                    mvm.scheduleMatch(
-                        context,
-                        matchvm.match
-                    )
-
-                }
+                //matchvm.selected = !matchvm.selected
+                //mvm.getParticipants(matchvm)
+                mvm.selectMatch(
+                    context,
+                    matchvm.match,
+                    selected = !matchvm.observableSelected)
             }
         ) {
-            if (matchvm.selected) {
+            if (matchvm.observableSelected) {
                 Text("Dont care")
             } else {
                 Text("Notify me")

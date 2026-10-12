@@ -35,7 +35,7 @@ object RetrofitLogInstance {
         .build()
 
     private val retrofit = Retrofit.Builder()
-        .baseUrl("https://logs.tf/api/v1/log/")
+        .baseUrl("https://logs.tf/api/v1/")
         .client(client)
         .addConverterFactory(GsonConverterFactory.create())
         .build()

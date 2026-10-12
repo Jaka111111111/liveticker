@@ -18,11 +18,13 @@ interface Etf2l_API {
 }
 
 interface Log_API {
-    @GET("")
+
+    @GET("log")
     suspend fun getRecentLogs(
-        @Query("player") id: String?
+        @Query("player") id: String?,
+        @Query("limit") limit: Int = 2
     ): RecentLogResponse
 
-    @GET("{id}")
+    @GET("log/{id}")
     suspend fun getResults(@Path("id") id: Int): LogResponse
 }

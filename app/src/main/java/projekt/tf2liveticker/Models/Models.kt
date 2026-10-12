@@ -1,8 +1,6 @@
 package projekt.tf2liveticker.Models
 
-import android.health.connect.datatypes.units.Length
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.serialization.Serializable
@@ -42,20 +40,49 @@ data class MatchDataList(
     val MatchData : List<MatchData> = emptyList()
 )
 
+@Serializable data class TeamData(
+    var id: Int = 0,
+    var players: List<PlayerLog> = emptyList(),
+    var score: Int = 0,
+)
+@Serializable
+data class MapData(
+    val name: String = "map",
+    var blue_score: Int = 0,
+    var red_score: Int = 0,
+    var red_team: Int = 0,
+    var blue_team: Int = 0,
+    var length: Int = 0,
+    var LogID: Int = 0,
+    var updated: Boolean = false,
+    var mapEnded: Boolean = false,
+    var winner: String = "",
+    var lastUpdated: Long = 0
+)
 @Serializable
 class MatchData(
     val match: Match,
-    var players_team1: List<PlayerLog> = emptyList(),
-    var players_team2: List<PlayerLog> = emptyList(),
-    var team1_colour: String? = "red",
-    var team2_colour: String? = "blue",
+    var bestOf: Int = match.maps.size,
+    var mapsNeededToWin: Int = (bestOf / 2) + 1,
     var red_score: Int = 0,
     var blue_score: Int = 0,
-    var length: Int = 0,
-    var oldLength: Int = 0
+    val team1: TeamData = TeamData(id = match.clan1.id),
+    val team2: TeamData = TeamData(id = match.clan2.id),
+    var selected: Boolean = false,
+    var matchEnded: Boolean = false,
 ) {
-    var selected by mutableStateOf(false)
-    var livelog by mutableIntStateOf(0)
+    var observableSelected by mutableStateOf(false)
+    var mutableMapDataList = mutableListOf<MapData>()
+
+    fun getLatestMap(): MapData {
+        if (mutableMapDataList.isEmpty()) {
+            mutableMapDataList.add(MapData())
+            return mutableMapDataList.first()
+        }
+        else {
+            return mutableMapDataList.last()
+        }
+    }
 
 }
 
