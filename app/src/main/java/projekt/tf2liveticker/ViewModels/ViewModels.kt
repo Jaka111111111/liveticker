@@ -33,6 +33,7 @@ class MainViewModel : ViewModel() {
     var error by mutableStateOf<String?>(null)
         private set
 
+    var nextPageToLoad = 1
 
     fun getParticipants(matchData: MatchData) {
         viewModelScope.launch {
@@ -95,7 +96,7 @@ class MainViewModel : ViewModel() {
                 val storageRepository =
                     MatchStorageRepository(context)
                 val md = MatchData(
-                    match = match
+                    match = match, selected = selected
                 )
                 md.selected = selected
                 md.observableSelected = selected
@@ -114,18 +115,22 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun getMatches(context: Context) {
+    fun getMatches(context: Context, page: Int = 1) {
         viewModelScope.launch {
             loading = true
             error = null
 
             try {
 
-                repository.getMatches(context)
+                repository.getMatches(context, page)
 
                 matches = repository.matches
 
                 matchData = repository.matchData
+
+                for (md in matchData) {
+                    md.observableSelected = md.selected
+                }
 
 
             } catch (e: Exception) {

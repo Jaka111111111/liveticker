@@ -4,7 +4,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.serialization.Serializable
+import projekt.tf2liveticker.RetrofitLogInstance
 import kotlin.Int
+import kotlin.random.Random
+import kotlin.text.get
 
 @Serializable
 data class PlayerLog( //etf2l
@@ -69,7 +72,7 @@ class MatchData(
     val team1: TeamData = TeamData(id = match.clan1.id),
     val team2: TeamData = TeamData(id = match.clan2.id),
     var selected: Boolean = false,
-    var matchEnded: Boolean = false,
+    var matchEnded: Boolean = false
 ) {
     var observableSelected by mutableStateOf(false)
     var mutableMapDataList = mutableListOf<MapData>()
@@ -82,6 +85,69 @@ class MatchData(
         else {
             return mutableMapDataList.last()
         }
+    }
+
+    suspend fun updateMapScore() {
+        var latestMap = getLatestMap()
+
+        val response = RetrofitLogInstance.log_api.getResults(latestMap.LogID)
+        latestMap.updated = false
+
+        if (latestMap.length != response.length) {
+            latestMap.updated = true
+            latestMap.lastUpdated = System.currentTimeMillis()
+
+            //CheckIfMapEnded()
+            if (latestMap.red_score + latestMap.blue_score == response.teams["Red"]?.score!! + response.teams["Blue"]?.score!!) {
+                latestMap.mapEnded = true
+            }
+
+
+        }
+        if ((System.currentTimeMillis() - latestMap.lastUpdated) / 1000 > 1200) {
+            latestMap.mapEnded = true
+        }
+        //
+        latestMap.length = response.length
+        latestMap.red_score = response.teams["Red"]?.score!!
+        latestMap.blue_score = response.teams["Blue"]?.score!!
+        if (latestMap.mapEnded) {
+            updateMatchScore(latestMap)
+        }
+    }
+
+    fun updateMatchScore(mapData: MapData) {
+        if (mapData.red_score == mapData.blue_score) {
+            mapData.winner = "tie"
+        }
+        else if (mapData.red_score > mapData.blue_score) {
+            mapData.winner = "red"
+            this.red_score++
+        }
+        else {
+            mapData.winner = "blue"
+            this.blue_score++
+        }
+
+        if (mapData.mapEnded && (red_score == mapsNeededToWin
+                             || blue_score == mapsNeededToWin)) {
+            matchEnded = true
+        }
+        else {
+            mutableMapDataList.add(MapData())
+        }
+    }
+
+    fun getPlayerCombination(): List<PlayerLog> {
+
+        var playerList: List<PlayerLog> = emptyList()
+        for (player in team2.players+team1.players) {
+            if (player.role == "Leader") {
+                playerList.apply { player }
+            }
+        }
+        return listOf(team1.players[Random.nextInt(team1.players.size)],
+            team2.players[Random.nextInt(team2.players.size)])
     }
 
 }
@@ -143,7 +209,23 @@ data class MatchesResponse(
     //val status: Status
 )
 data class RecentLogResponse(
-    val logs: logs
+    val success: Boolean,
+    val results: Int,
+    val total: Int,
+    val parameters: LogParameters,
+    val logs: List<log> = emptyList()
+)
+data class LogInfo(
+    val map: String,
+    val date: Long
+)
+data class LogParameters(
+    val player: String,
+    val uploader: String? = null,
+    val title: String? = null,
+    val map: String? = null,
+    val limit: Int,
+    val offset: Int
 )
 
 data class LogResponse(
@@ -152,8 +234,9 @@ data class LogResponse(
     val players: Map<String, PlayerStats>,
     val names: Map<String, String>,
     val success: Boolean,
-    val length: Int
-)
+    val length: Int,
+    val info: LogInfo
+    )
 
 @Serializable
 data class TeamStats (

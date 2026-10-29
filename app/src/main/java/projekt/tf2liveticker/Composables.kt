@@ -1,6 +1,8 @@
 package projekt.tf2liveticker
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,9 +30,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import dev.chrisbanes.accompanist.coil.CoilImage
 import projekt.tf2liveticker.Models.MatchData
 import projekt.tf2liveticker.ViewModels.MainViewModel
+import java.util.Date
 
 @Composable
 fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
@@ -40,7 +44,6 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
     val error = mvm.error
     val context = LocalContext.current
     var dummylog by remember { mutableStateOf("") }
-
     var filter by remember { mutableStateOf(0) }
 
     Column(
@@ -97,14 +100,26 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
         ) {
             items(matchViewModels) { matchVM ->
 
-                if (filter == 0 || matchVM.observableSelected) {
+                if ((filter == 0 && matchVM.match.time*1000 > System.currentTimeMillis()) ||
+                    (filter == 1 && matchVM.observableSelected)) {
                     MatchOverview(
                         matchvm = matchVM, mvm
                     )
                 }
             }
+            item {
 
+                Button(
+                    onClick = {
+                        mvm.nextPageToLoad++
+                        mvm.getMatches(context, page = mvm.nextPageToLoad)
+                    }
+                ) {
+                    Text("Load page ${mvm.nextPageToLoad+1}")
+                }
+            }
         }
+
     }
 }
 
@@ -137,12 +152,13 @@ fun TeamAvatar(data: String) {
     )
 }
 
+
 @Composable
 fun MatchOverview(matchvm: MatchData, mvm: MainViewModel)
 {
 
     val context = LocalContext.current
-
+    val date = Date(matchvm.match.time*1000)
     Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -150,27 +166,25 @@ fun MatchOverview(matchvm: MatchData, mvm: MainViewModel)
         )
     {
         Text(
+            text = "${matchvm.match.clan1.name} vs ${matchvm.match.clan2.name}", color = White, textAlign = TextAlign.Center
+        )
+
+        Text(
             text = matchvm.match.competition.name, color = White
         )
 
         Text(
-            text = "${matchvm.match.clan1.name} vs ${matchvm.match.clan2.name}", color = White
-        )
-
-        Text(
-            text = "${
-                java.time.format.DateTimeFormatter.ISO_INSTANT
-                    .format(java.time.Instant.ofEpochSecond(matchvm.match.time))
-            }", color = White
+            text = "${date.date}.${date.month + 1}.${date.year} \n ${date.hours}:${date.minutes}", color = White
         )
         Button(
             onClick = {
                 //matchvm.selected = !matchvm.selected
                 //mvm.getParticipants(matchvm)
+                matchvm.observableSelected = !matchvm.observableSelected
                 mvm.selectMatch(
                     context,
                     matchvm.match,
-                    selected = !matchvm.observableSelected)
+                    selected = matchvm.observableSelected)
             }
         ) {
             if (matchvm.observableSelected) {

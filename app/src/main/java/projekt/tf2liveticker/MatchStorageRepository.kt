@@ -17,7 +17,7 @@ import projekt.tf2liveticker.Models.MatchDataList
 class MatchStorageRepository(
     private val context: Context
 ) {
-    val matches: Flow<List<MatchData>> =
+    val matchDataList: Flow<List<MatchData>> =
         context.matchDataStore.data.map { matchDataList ->
             matchDataList.MatchData
         }
@@ -60,8 +60,9 @@ class MatchStorageRepository(
         val com = Competition("quatsch", 2, "Nations Cup #11 Grand Finals", "6v6")
         val d = Division(9, "hi", 1, 1)
         val ms = emptyList<String>()
-        val m = Match(92991, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
+        val m = Match(92991, c1, c2, com, d, ms, "1", 1788431910)
         val nationsCupdummy = MatchData(m)
+        nationsCupdummy.bestOf = 1
         saveMatch(nationsCupdummy)
     }
 
@@ -78,6 +79,17 @@ class MatchStorageRepository(
         val d = context.matchDataStore.data.first()
         return d.MatchData
     }
+
+//    suspend fun getSelectedMatches(): List<MatchData> {
+//        val d = context.matchDataStore.data.first()
+//        val selectedMatches: List<MatchData>
+//        d.MatchData.forEach { md ->
+//            if(md.selected) {
+//                selectedMatches
+//            }
+//        }
+//        return selectedMatches
+//    }
 
     suspend fun updateMatch(updatedMatch: MatchData) {
         Log.d("STORAGE", "updateMatch gestartet")
@@ -110,32 +122,7 @@ class MatchStorageRepository(
         }
 
         Log.d("STORAGE", "updateMatch beendet")
-//        context.matchDataStore.updateData { currentData ->
-//
-//            val exists = currentData.MatchData.any {
-//                it.match.id == updatedMatch.match.id
-//            }
-//
-//            if (exists) {
-//
-//                currentData.copy(
-//                    MatchData = currentData.MatchData.map {
-//                        if (it.match.id == updatedMatch.match.id) {
-//                            updatedMatch
-//                        } else {
-//                            it
-//                        }
-//                    }
-//                )
-//
-//            } else {
-//
-//                currentData.copy(
-//                    MatchData = currentData.MatchData + updatedMatch
-//                )
-//            }
-//        }
-//    }
+
     }
 
 }

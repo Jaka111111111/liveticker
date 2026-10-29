@@ -25,33 +25,32 @@ class MatchUpdateWorker(
 
         return try {
 
-            // Match über Repository/API laden
             val matchData = storageRepository.getMatch(matchId)
                 ?: return Result.failure()
 
-            repository.refreshResults(matchData)
 
             if (matchData.selected) {
 
+                repository.refreshResults(matchData)
 
                 if (matchData.getLatestMap().LogID != 0) {
                     val latestMap = matchData.getLatestMap()
                     if (latestMap.updated || latestMap.mapEnded) {
 
-//                    matchData.oldLength = matchData.length
 
                         NotificationHelper.showNotification(
                             context = applicationContext,
                             title = "${matchData.match.clan1.name} vs ${matchData.match.clan2.name}",
 
-                            message = "${
+                            message = "${latestMap.blue_score} - ${latestMap.red_score} on ${latestMap.name} \n"
+                            +
+                                    "${
                                 if (latestMap.mapEnded) {
                                     "Final Score after"
                                 } else {
                                     "Minute"
                                 }
-                            }  ${(latestMap.length / 60)}:" +
-                                    "${(latestMap.length % 60)}  ${latestMap.blue_score} - ${latestMap.red_score} on ${latestMap.name}",
+                            }  ${(latestMap.length / 60)}:${(latestMap.length % 60)}",
                             notificationId = matchId
                         )
 
@@ -59,7 +58,7 @@ class MatchUpdateWorker(
 
                 }
 
-                matchData.match.time = (System.currentTimeMillis() / 1000) + 30
+                //matchData.match.time = (System.currentTimeMillis() / 1000) + 30
                 storageRepository.updateMatch(matchData)
 
                 if (!matchData.matchEnded) {
