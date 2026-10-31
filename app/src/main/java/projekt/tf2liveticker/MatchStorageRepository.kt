@@ -7,12 +7,7 @@ import androidx.datastore.dataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import projekt.tf2liveticker.Models.Clan
-import projekt.tf2liveticker.Models.Competition
-import projekt.tf2liveticker.Models.Division
-import projekt.tf2liveticker.Models.Match
-import projekt.tf2liveticker.Models.MatchData
-import projekt.tf2liveticker.Models.MatchDataList
+import projekt.tf2liveticker.MatchData
 
 class MatchStorageRepository(
     private val context: Context

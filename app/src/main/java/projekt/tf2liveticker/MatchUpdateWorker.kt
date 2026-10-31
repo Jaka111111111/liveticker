@@ -61,7 +61,17 @@ class MatchUpdateWorker(
                 //matchData.match.time = (System.currentTimeMillis() / 1000) + 30
                 storageRepository.updateMatch(matchData)
 
-                if (!matchData.matchEnded) {
+                if (matchData.matchEnded) {
+                    NotificationHelper.showNotification(
+                        context = applicationContext,
+                        title = "${matchData.match.clan1.name} vs ${matchData.match.clan2.name} concluded!",
+
+                        message = "${matchData.team1.score} - ${matchData.team2.score} \n"
+                                ,
+                        notificationId = matchId
+                    )
+                }
+                else {
                     repository.scheduleMatch(applicationContext, matchData.match)
                 }
             }

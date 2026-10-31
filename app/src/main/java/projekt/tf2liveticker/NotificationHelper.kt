@@ -15,9 +15,9 @@ object NotificationHelper {
     fun createNotificationChannel(context: Context) {
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is not in the Support Library.
-        val name = "MatchNotifications"
+        val name = "Match Notifications"
         val descriptionText = "Blablabla"
-        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val importance = NotificationManager.IMPORTANCE_HIGH
         val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
             description = descriptionText
         }
