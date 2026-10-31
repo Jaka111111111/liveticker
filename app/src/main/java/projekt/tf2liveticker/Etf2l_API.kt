@@ -1,9 +1,5 @@
 package projekt.tf2liveticker
 
-import projekt.tf2liveticker.Models.LogResponse
-import projekt.tf2liveticker.Models.MatchesResponse
-import projekt.tf2liveticker.Models.RecentLogResponse
-import projekt.tf2liveticker.Models.TeamResponse
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -23,7 +19,7 @@ interface Log_API {
     @GET("log")
     suspend fun getRecentLogs(
         @Query("player") id: String?,
-        @Query("limit") limit: Int = 2
+        @Query("limit") limit: Int = 1
     ): RecentLogResponse
 
     @GET("log/{id}")
