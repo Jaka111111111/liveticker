@@ -4,7 +4,6 @@ import androidx.datastore.core.Serializer
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import projekt.tf2liveticker.Models.MatchDataList
 import java.io.InputStream
 import java.io.OutputStream
 

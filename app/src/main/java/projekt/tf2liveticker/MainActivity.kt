@@ -1,13 +1,9 @@
 package projekt.tf2liveticker
 
-import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.datastore.dataStore
-import projekt.tf2liveticker.Models.MatchDataList
-import projekt.tf2liveticker.ViewModels.MainViewModel
 
 class MainActivity : ComponentActivity() {
 

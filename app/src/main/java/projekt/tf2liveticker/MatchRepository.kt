@@ -2,21 +2,12 @@ package projekt.tf2liveticker
 
 import android.content.Context
 import android.util.Log
-import androidx.work.Constraints
-import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
-import projekt.tf2liveticker.Models.Clan
-import projekt.tf2liveticker.Models.Competition
-import projekt.tf2liveticker.Models.Division
-import projekt.tf2liveticker.Models.MapData
-import projekt.tf2liveticker.Models.Match
-import projekt.tf2liveticker.Models.MatchData
-import projekt.tf2liveticker.Models.Player
-import projekt.tf2liveticker.Models.RecentLogResponse
-import projekt.tf2liveticker.Models.TeamData
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class MatchRepository() {
 
@@ -28,15 +19,15 @@ class MatchRepository() {
 
     suspend fun tryRandomCombination(matchData: MatchData): RecentLogResponse {
         val list = matchData.getPlayerCombination()
-        Log.d("findLiveLog", "Spieler: ${list[0].name} und ${list[1].name}")
-        return RetrofitLogInstance.log_api.getRecentLogs(list[0].steam?.id64 +","+list[1].steam?.id64)
+        Log.d("findLiveLog", "Spieler: ${list[0].name} ${list[0].steam?.id64}") //und ${list[1].name}")
+        return RetrofitLogInstance.log_api.getRecentLogs(list[0].steam?.id64) //+ "," + list[1].steam?.id64)
     }
 
     suspend fun findLiveLog(matchData: MatchData) {
 
         if (matchData.mutableMapDataList.last().LogID == 0) {
 
-            if(matchData.team1.players.isEmpty()) {
+            if (matchData.team1.players.isEmpty() || matchData.team2.players.isEmpty()) {
                 getParticipants(matchData)
             }
 
@@ -45,63 +36,68 @@ class MatchRepository() {
             Log.d("findLiveLog", "Ergebnisse: ${randomPlayerRequest.logs.size}")
             Log.d("findLiveLog", "Ergebnisse: ${randomPlayerRequest}")
 
-            val latest = RetrofitLogInstance.log_api.getResults(randomPlayerRequest.logs.first().id)
+            if (randomPlayerRequest.logs.isEmpty()) {
+                findLiveLog(matchData)
+            }
+            else {
 
-            Log.d("findLiveLog", "Log Alter: ${(latest.info.date)}")
-            Log.d("findLiveLog", "Match Zeitpunkt: ${(matchData.match.time)}")
-            Log.d("findLiveLog", "Log aktuell genug?: ${(latest.info.date > matchData.match.time)}")
+                val latest =
+                    RetrofitLogInstance.log_api.getResults(randomPlayerRequest.logs.first().id)
+
+                Log.d("findLiveLog", "Log Alter: ${(latest.info.date)}")
+                Log.d("findLiveLog", "Match Zeitpunkt: ${(matchData.match.time)}")
+                Log.d(
+                    "findLiveLog",
+                    "Log aktuell genug?: ${(latest.info.date > matchData.match.time)}"
+                )
 
 
-            if (latest.info.date > matchData.match.time) {
+                var counter = 0
 
-                matchData.mutableMapDataList.last().LogID = randomPlayerRequest.logs.first().id
+                Log.d("findLiveLog", "Ausgewähltes Log: ${latest}")
+                val players = latest.players.map { (steam3Id, stats) ->
 
-//                var counter = 0
-//
-//                Log.d("findLiveLog", "Ausgewähltes Log: ${latest}")
-//                val players = latest.players.map { (steam3Id, stats) ->
-//
-//                    Player(
-//                        steam3Id = steam3Id,
-//                        name = latest.names[steam3Id] ?: "Unknown",
-//                        team = stats.team,
-//                        kills = stats.kills,
-//                        deaths = stats.deaths,
-//                        assists = stats.assists,
-//                        damage = stats.dmg
-//                    )
-//                }
-//
-//                players.forEach { player ->
-//                    val id = player.steam3Id
-//
-//                    matchData.team1.players.forEach {
-//                        if (it.steam?.id3 == id) {
-//                            if (player.team == "red") {
-//                                matchData.mutableMapDataList.last().red_team = matchData.team1.id
-//                                matchData.mutableMapDataList.last().blue_team = matchData.team2.id
-//                            }
-//                            counter++
-//                        }
-//                    }
-//
-//                    matchData.team2.players.forEach {
-//                        if (it.steam?.id3 == id) {
-//                            if (player.team == "red") {
-//                                matchData.mutableMapDataList.last().red_team = matchData.team2.id
-//                                matchData.mutableMapDataList.last().blue_team = matchData.team1.id
-//                            }
-//                            counter++
-//                        }
-//                    }
+                    Player(
+                        steam3Id = steam3Id,
+                        name = latest.names[steam3Id] ?: "Unknown",
+                        team = stats.team,
+                        kills = stats.kills,
+                        deaths = stats.deaths,
+                        assists = stats.assists,
+                        damage = stats.dmg
+                    )
                 }
 
-//                Log.d("findLiveLog", "Relevante Spieler: ${counter}")
-//
-//                if (counter >= 8) {
-//                    matchData.mutableMapDataList.last().LogID = randomPlayerRequest.logs[0].id
-//                }
+                players.forEach { player ->
+                    val id = player.steam3Id
 
+                    matchData.team1.players.forEach {
+                        if (it.steam?.id3 == id) {
+                            if (player.team == "red") {
+                                matchData.mutableMapDataList.last().red_team = matchData.team1.id
+                                matchData.mutableMapDataList.last().blue_team = matchData.team2.id
+                            }
+                            counter++
+                        }
+                    }
+
+                    matchData.team2.players.forEach {
+                        if (it.steam?.id3 == id) {
+                            if (player.team == "red") {
+                                matchData.mutableMapDataList.last().red_team = matchData.team2.id
+                                matchData.mutableMapDataList.last().blue_team = matchData.team1.id
+                            }
+                            counter++
+                        }
+                    }
+                }
+
+                Log.d("findLiveLog", "Relevante Spieler: ${counter}")
+
+                if (counter >= 8) {
+                    matchData.mutableMapDataList.last().LogID = randomPlayerRequest.logs[0].id
+                }
+            }
         }
     }
 
@@ -115,7 +111,7 @@ class MatchRepository() {
         val d = Division(9, "hi", 1, 1)
         val ms = emptyList<String>()
         val m = Match(logId, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
-        val md = MatchData(m, bestOf = 2, team1 = TeamData(id = 0), team2 = TeamData(1))
+        val md = MatchData(m, bestOf = 1, team1 = TeamData(id = 0), team2 = TeamData(1))
         md.selected = true
         md.mutableMapDataList.add(MapData(LogID = logId))
         this.matchData += md
@@ -161,8 +157,9 @@ class MatchRepository() {
         val matchTimeMillis = match.time * 1000L
         var delay = matchTimeMillis - System.currentTimeMillis()
 
+
         if (delay < 0) {
-            delay = System.currentTimeMillis() + 3000
+            delay = 30000
         }
 //        val constraints = Constraints.Builder()
 //            .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -175,6 +172,10 @@ class MatchRepository() {
             .setInputData(inputData)
 //            .setConstraints(constraints)
             .build()
+        Log.d(
+            "Schedule Worker", "Worker arbeitet in ${delay.milliseconds.inWholeHours} Stunden, " +
+                    "${delay.milliseconds.inWholeMinutes % 60} Minuten und ${delay.milliseconds.inWholeSeconds % 1200} Sekunden"
+        )
         WorkManager
             .getInstance(context)
             .enqueue(request)
