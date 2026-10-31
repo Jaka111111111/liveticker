@@ -1,8 +1,6 @@
 package projekt.tf2liveticker
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.snapping.SnapPosition
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,6 +16,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -32,8 +31,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import dev.chrisbanes.accompanist.coil.CoilImage
-import projekt.tf2liveticker.Models.MatchData
-import projekt.tf2liveticker.ViewModels.MainViewModel
 import java.util.Date
 
 @Composable
@@ -56,7 +53,9 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
             Button(
                 onClick = {
                     filter = 0
-                    mvm.getMatches(context)
+                    if (mvm.matchData.isEmpty()) {
+                        mvm.getMatches(context)
+                    }
                 }
             ) {
                 Text("Upcoming Matches")
@@ -100,7 +99,7 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
         ) {
             items(matchViewModels) { matchVM ->
 
-                if ((filter == 0 && matchVM.match.time*1000 > System.currentTimeMillis()) ||
+                if ((filter == 0 && matchVM.match.time*1000 + 20000 > System.currentTimeMillis()) ||
                     (filter == 1 && matchVM.observableSelected)) {
                     MatchOverview(
                         matchvm = matchVM, mvm
