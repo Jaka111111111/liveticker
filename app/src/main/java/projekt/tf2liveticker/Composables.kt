@@ -16,7 +16,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -40,7 +39,7 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
     val loading = mvm.loading
     val error = mvm.error
     val context = LocalContext.current
-    var dummylog by remember { mutableStateOf("") }
+    var playerIDs by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf(0) }
 
     Column(
@@ -85,12 +84,12 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
         }
         Row(verticalAlignment = Alignment.Top) {
             OutlinedTextField(
-                value = dummylog,
-                onValueChange = { dummylog = it },
+                value = playerIDs,
+                onValueChange = { playerIDs = it },
                 label = { Text("...") },
                 shape = RoundedCornerShape(12.dp)
             )
-            Button(onClick = {mvm.refreshResultsDummy(context, dummylog.toInt())}) {
+            Button(onClick = {mvm.refreshResultsDummy(context, playerIDs)}) {
                 Text("Find")
             }
         }
@@ -182,7 +181,7 @@ fun MatchOverview(matchvm: MatchData, mvm: MainViewModel)
                 matchvm.observableSelected = !matchvm.observableSelected
                 mvm.selectMatch(
                     context,
-                    matchvm.match,
+                    MatchData(matchvm.match),
                     selected = matchvm.observableSelected)
             }
         ) {

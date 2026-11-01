@@ -46,7 +46,7 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun refreshResultsDummy(context: Context, logID: Int) {
+    fun refreshResultsDummy(context: Context, playerIDs: String) {
         viewModelScope.launch {
             loading = true
             error = null
@@ -58,11 +58,14 @@ class MainViewModel : ViewModel() {
                 val com = Competition("Placeholder", 2, "Placeholder", "6v6")
                 val d = Division(9, "hi", 1, 1)
                 val ms = emptyList<String>()
-                val m = Match(logID, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
+                val m = Match(0, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
+                val md = MatchData(m)
+                val players = playerIDs.split(",")
+                md.team1.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[0]), ""))
+                md.team2.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[1]), ""))
+                selectMatch(context, md, 0)
 
-                selectMatch(context, m, logID)
-
-                repository.refreshResultsDummy(context, logID)
+                repository.refreshResultsDummy(context, playerIDs)
 
             } catch (e: Exception) {
                 error = e.message ?: "Unbekannter Fehler"
@@ -74,7 +77,7 @@ class MainViewModel : ViewModel() {
 
     fun selectMatch(
         context: Context,
-        match: Match,
+        matchData: MatchData,
         dummylivelog: Int = 0,
         selected: Boolean = true
     ) {
@@ -86,16 +89,14 @@ class MainViewModel : ViewModel() {
 
                 val storageRepository =
                     MatchStorageRepository(context)
-                val md = MatchData(
-                    match = match, selected = selected
-                )
-                md.selected = selected
-                md.observableSelected = selected
-                md.getLatestMap().LogID = dummylivelog
-                storageRepository.updateMatch(md)
 
-                if (md.selected) {
-                    repository.scheduleMatch(context, match)
+                matchData.selected = selected
+                matchData.observableSelected = selected
+                matchData.getLatestMap().LogID = dummylivelog
+                storageRepository.updateMatch(matchData)
+
+                if (matchData.selected) {
+                    repository.scheduleMatch(context, matchData.match)
                 }
 
             } catch (e: Exception) {

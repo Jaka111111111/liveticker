@@ -80,11 +80,11 @@ class MatchData(
         if (mutableMapDataList.isEmpty()) {
             mutableMapDataList.add(MapData())
             return mutableMapDataList.first()
-        }
-        else {
+        } else {
             return mutableMapDataList.last()
         }
     }
+
     suspend fun checkRecentLogs() {
         val randID = getPlayerCombination()[0].steam?.id64
         val response = RetrofitLogInstance.log_api.getRecentLogs(randID)
@@ -93,6 +93,7 @@ class MatchData(
             getLatestMap().mapEnded = true
         }
     }
+
     suspend fun updateMapScore() {
 
         var latestMap = getLatestMap()
@@ -123,21 +124,19 @@ class MatchData(
     fun updateMatchScore(mapData: MapData) {
         if (mapData.red_score == mapData.blue_score) {
             mapData.winner = "tie"
-        }
-        else if (mapData.red_score > mapData.blue_score) {
+        } else if (mapData.red_score > mapData.blue_score) {
             mapData.winner = "red"
             this.red_score++
-        }
-        else {
+        } else {
             mapData.winner = "blue"
             this.blue_score++
         }
 
         if (mapData.mapEnded && (red_score == mapsNeededToWin
-                             || blue_score == mapsNeededToWin)) {
+                    || blue_score == mapsNeededToWin)
+        ) {
             matchEnded = true
-        }
-        else {
+        } else {
             mutableMapDataList.add(MapData())
         }
     }
@@ -152,12 +151,20 @@ class MatchData(
         //}
         Log.d("getPlayerCombination", "team 1: ${team1.players}")
         Log.d("getPlayerCombination", "team 2: ${team2.players}")
-        return listOf(team1.players[Random.nextInt(team1.players.size - 1)],
-            team2.players[Random.nextInt(team2.players.size - 1)])
+        if (team1.players.size == 1 && team2.players.size == 1) {
+            return listOf(
+                    team1.players[0],
+            team2.players[0]
+            )
+        } else {
+            return listOf(
+                team1.players[Random.nextInt(team1.players.size - 1)],
+                team2.players[Random.nextInt(team2.players.size - 1)]
+            )
+        }
+
     }
-
 }
-
 @Serializable
 data class Match(
     val id: Int,

@@ -7,7 +7,6 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 class MatchRepository() {
 
@@ -44,15 +43,13 @@ class MatchRepository() {
                 val latest =
                     RetrofitLogInstance.log_api.getResults(randomPlayerRequest.logs.first().id)
 
-                Log.d("findLiveLog", "Log Alter: ${(latest.info.date)}")
-                Log.d("findLiveLog", "Match Zeitpunkt: ${(matchData.match.time)}")
                 Log.d(
                     "findLiveLog",
                     "Log aktuell genug?: ${(latest.info.date > matchData.match.time)}"
                 )
 
 
-                var counter = 0
+                var relevantPlayerCounter = 0
 
                 Log.d("findLiveLog", "Ausgewähltes Log: ${latest}")
                 val players = latest.players.map { (steam3Id, stats) ->
@@ -67,53 +64,59 @@ class MatchRepository() {
                         damage = stats.dmg
                     )
                 }
+                Log.d("findLiveLog", players.size.toString())
+
 
                 players.forEach { player ->
                     val id = player.steam3Id
 
-                    matchData.team1.players.forEach {
-                        if (it.steam?.id3 == id) {
+                    matchData.team1.players.forEach { //später ändern!!!!
+
+                        Log.d("findLiveLog", " Steam3: [U:1:${it.steam?.id64?.toInt()?.minus(76561197960265728)}]")
+                        Log.d("findLiveLog", "Verglichen mit: "+id)
+
+                        if ("[U:1:${it.steam?.id64?.toInt()?.minus(76561197960265728)}]" == id) {     //it.steam?.id3 == id) {
                             if (player.team == "red") {
                                 matchData.mutableMapDataList.last().red_team = matchData.team1.id
                                 matchData.mutableMapDataList.last().blue_team = matchData.team2.id
                             }
-                            counter++
+                            relevantPlayerCounter++
                         }
                     }
 
                     matchData.team2.players.forEach {
-                        if (it.steam?.id3 == id) {
+                        if ("[U:1:${it.steam?.id64?.toInt()?.minus(76561197960265728)}]" == id) { //it.steam?.id3 == id) {
                             if (player.team == "red") {
                                 matchData.mutableMapDataList.last().red_team = matchData.team2.id
                                 matchData.mutableMapDataList.last().blue_team = matchData.team1.id
                             }
-                            counter++
+                            relevantPlayerCounter++
                         }
                     }
                 }
 
-                Log.d("findLiveLog", "Relevante Spieler: ${counter}")
+                Log.d("findLiveLog", "Relevante Spieler: ${relevantPlayerCounter}")
 
-                if (counter >= 8) {
+                if (relevantPlayerCounter >= 8 || relevantPlayerCounter == (matchData.team2.players.size+matchData.team1.players.size)) {
                     matchData.mutableMapDataList.last().LogID = randomPlayerRequest.logs[0].id
                 }
             }
         }
     }
 
-    suspend fun refreshResultsDummy(context: Context, logId: Int) {
-//        val response = RetrofitLogInstance.log_api.getResults(logId)
-//        val red_score = response.teams["Red"]?.score!!
-//        val blue_score = response.teams["Blue"]?.score!!
+    suspend fun refreshResultsDummy(context: Context, playerIDs: String) {
         val c1 = Clan("England", 0, "Placeholder")
         val c2 = Clan("England", 1, "Holdplacer")
         val com = Competition("Placeholder", 2, "Placeholder", "6v6")
         val d = Division(9, "hi", 1, 1)
         val ms = emptyList<String>()
-        val m = Match(logId, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
+        val m = Match(0, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
         val md = MatchData(m, bestOf = 1, team1 = TeamData(id = 0), team2 = TeamData(1))
         md.selected = true
-        md.mutableMapDataList.add(MapData(LogID = logId))
+        val players = playerIDs.split(",")
+        md.team1.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[0]), ""))
+        md.team2.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[1]), ""))
+        //md.mutableMapDataList.add(MapData(LogID = 0))
         this.matchData += md
         val storageRepository =
             MatchStorageRepository(context)
