@@ -92,7 +92,7 @@ class MainViewModel : ViewModel() {
 
                 matchData.selected = selected
                 matchData.observableSelected = selected
-                matchData.getLatestMap().LogID = dummylivelog
+                matchData.getLatestMap().logID = dummylivelog
                 storageRepository.updateMatch(matchData)
 
                 if (matchData.selected) {
@@ -107,14 +107,43 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun getMatches(context: Context, page: Int = 1) {
+    fun getLocalMatches(context: Context) {
         viewModelScope.launch {
             loading = true
             error = null
 
             try {
 
-                repository.getMatches(context, page)
+                repository.getLocalMatches(context)
+
+                matches = repository.matches
+
+                matchData = repository.matchData
+
+                for (md in matchData) {
+                    md.observableSelected = md.selected
+                }
+
+
+            } catch (e: Exception) {
+
+                error = e.message ?: "Unbekannter Fehler"
+
+            } finally {
+
+                loading = false
+            }
+        }
+    }
+
+    fun getMatchesFromEtf2l(context: Context, page: Int = 1) {
+        viewModelScope.launch {
+            loading = true
+            error = null
+
+            try {
+
+                repository.getEtf2lMatches(context, page)
 
                 matches = repository.matches
 
