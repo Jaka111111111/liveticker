@@ -33,7 +33,7 @@ class MatchUpdateWorker(
 
                 repository.refreshResults(matchData)
 
-                if (matchData.getLatestMap().LogID != 0) {
+                if (matchData.getLatestMap().logID != 0) {
                     val latestMap = matchData.getLatestMap()
                     if (latestMap.updated || latestMap.mapEnded) {
 
@@ -42,7 +42,7 @@ class MatchUpdateWorker(
                             context = applicationContext,
                             title = "${matchData.match.clan1.name} vs ${matchData.match.clan2.name}",
 
-                            message = "${latestMap.blue_score} - ${latestMap.red_score} on ${latestMap.name} \n"
+                            message = "${latestMap.blueScore} - ${latestMap.redScore} on map ${matchData.mutableMapDataList.size} ${latestMap.name} \n"
                             +
                                     "${
                                 if (latestMap.mapEnded) {
@@ -66,7 +66,8 @@ class MatchUpdateWorker(
                         context = applicationContext,
                         title = "${matchData.match.clan1.name} vs ${matchData.match.clan2.name} concluded!",
 
-                        message = "${matchData.team1.score} - ${matchData.team2.score} \n"
+                        message = "${matchData.team1.score} - ${matchData.team2.score} \n" +
+                                matchData.mapInfoStringBuilder()
                                 ,
                         notificationId = matchId
                     )

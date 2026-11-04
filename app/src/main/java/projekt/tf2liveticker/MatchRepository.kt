@@ -24,7 +24,7 @@ class MatchRepository() {
 
     suspend fun findLiveLog(matchData: MatchData) {
 
-        if (matchData.mutableMapDataList.last().LogID == 0) {
+        if (matchData.mutableMapDataList.last().logID == 0) {
 
             if (matchData.team1.players.isEmpty() || matchData.team2.players.isEmpty()) {
                 getParticipants(matchData)
@@ -72,23 +72,24 @@ class MatchRepository() {
 
                     matchData.team1.players.forEach { //später ändern!!!!
 
-                        Log.d("findLiveLog", " Steam3: [U:1:${it.steam?.id64?.toInt()?.minus(76561197960265728)}]")
-                        Log.d("findLiveLog", "Verglichen mit: "+id)
-
-                        if ("[U:1:${it.steam?.id64?.toInt()?.minus(76561197960265728)}]" == id) {     //it.steam?.id3 == id) {
+                        Log.d("findLiveLog", "Verglichen mit: $id")
+                        val steam = it.steam
+                        val s64 = steam?.id64
+                        val steam3 = s64?.toLong()
+                        if ("[U:1:${steam3?.minus(76561197960265728)}]" == id) {     //it.steam?.id3 == id) {
                             if (player.team == "red") {
-                                matchData.mutableMapDataList.last().red_team = matchData.team1.id
-                                matchData.mutableMapDataList.last().blue_team = matchData.team2.id
+                                matchData.mutableMapDataList.last().redTeamID = matchData.team1.id
+                                matchData.mutableMapDataList.last().blueTeamID = matchData.team2.id
                             }
                             relevantPlayerCounter++
                         }
                     }
 
                     matchData.team2.players.forEach {
-                        if ("[U:1:${it.steam?.id64?.toInt()?.minus(76561197960265728)}]" == id) { //it.steam?.id3 == id) {
+                        if ("[U:1:${it.steam?.id64?.toLong()?.minus(76561197960265728)}]" == id) { //it.steam?.id3 == id) {
                             if (player.team == "red") {
-                                matchData.mutableMapDataList.last().red_team = matchData.team2.id
-                                matchData.mutableMapDataList.last().blue_team = matchData.team1.id
+                                matchData.mutableMapDataList.last().redTeamID = matchData.team2.id
+                                matchData.mutableMapDataList.last().blueTeamID = matchData.team1.id
                             }
                             relevantPlayerCounter++
                         }
@@ -97,8 +98,11 @@ class MatchRepository() {
 
                 Log.d("findLiveLog", "Relevante Spieler: ${relevantPlayerCounter}")
 
-                if (relevantPlayerCounter >= 8 || relevantPlayerCounter == (matchData.team2.players.size+matchData.team1.players.size)) {
-                    matchData.mutableMapDataList.last().LogID = randomPlayerRequest.logs[0].id
+                if (relevantPlayerCounter >= 8
+                    ||
+                    relevantPlayerCounter == (matchData.team2.players.size+matchData.team1.players.size))
+                {
+                    matchData.mutableMapDataList.last().logID = randomPlayerRequest.logs[0].id
                 }
             }
         }
@@ -111,7 +115,7 @@ class MatchRepository() {
         val d = Division(9, "hi", 1, 1)
         val ms = emptyList<String>()
         val m = Match(0, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
-        val md = MatchData(m, bestOf = 1, team1 = TeamData(id = 0), team2 = TeamData(1))
+        val md = MatchData(m, bestOf = 1, team1 = TeamData(name = "BBBB", id = 0), team2 = TeamData(name = "A",id = 1))
         md.selected = true
         val players = playerIDs.split(",")
         md.team1.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[0]), ""))
@@ -128,10 +132,11 @@ class MatchRepository() {
 
     suspend fun refreshResults(matchData: MatchData?) {
         if (matchData!!.selected) { //&& matchData.match.time * 1000L < System.currentTimeMillis()
-            if (matchData.getLatestMap().LogID == 0) {
+            if (matchData.getLatestMap().logID == 0) {
                 findLiveLog(matchData)
             }
-            if (matchData.mutableMapDataList.last().LogID != 0) {
+            val latest = matchData.mutableMapDataList.last()
+            if (latest.logID != 0 && (System.currentTimeMillis() - latest.lastUpdated) > 30000) {
 
                 matchData.updateMapScore()
 
@@ -139,7 +144,12 @@ class MatchRepository() {
         }
     }
 
-    suspend fun getMatches(context: Context, page: Int) {
+    suspend fun getLocalMatches(context: Context) {
+        val storageRepository = MatchStorageRepository(context)
+        matchData = storageRepository.getAllMatches()
+    }
+
+    suspend fun getEtf2lMatches(context: Context, page: Int) {
         val storageRepository = MatchStorageRepository(context)
         val response = RetrofitEtf2lInstance.etf2l_api.getMatches(page)
         matches = response.results.data
@@ -148,8 +158,6 @@ class MatchRepository() {
         }
         storageRepository.addDummyData()
         matchData = storageRepository.getAllMatches()
-//        matchData.first().observableSelected
-
     }
 
     fun scheduleMatch(
