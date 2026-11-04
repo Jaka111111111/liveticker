@@ -51,7 +51,7 @@ class MatchUpdateWorker(
                                     "Minute"
                                 }
                             }  ${(latestMap.length / 60)}:${(latestMap.length % 60)}",
-                            notificationId = matchId
+                            notificationId = latestMap.logID
                         )
 
                     }
@@ -66,7 +66,7 @@ class MatchUpdateWorker(
                         context = applicationContext,
                         title = "${matchData.match.clan1.name} vs ${matchData.match.clan2.name} concluded!",
 
-                        message = "${matchData.team1.score} - ${matchData.team2.score} \n" +
+                        message = "${matchData.team1score} - ${matchData.team2score} \n" +
                                 matchData.mapInfoStringBuilder()
                                 ,
                         notificationId = matchId

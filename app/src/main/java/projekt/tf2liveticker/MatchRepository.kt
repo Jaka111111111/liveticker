@@ -103,6 +103,7 @@ class MatchRepository() {
                     relevantPlayerCounter == (matchData.team2.players.size+matchData.team1.players.size))
                 {
                     matchData.mutableMapDataList.last().logID = randomPlayerRequest.logs[0].id
+                    matchData.mutableMapDataList.last().name = randomPlayerRequest.logs[0].map
                 }
             }
         }
@@ -122,6 +123,7 @@ class MatchRepository() {
         md.team2.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[1]), ""))
         //md.mutableMapDataList.add(MapData(LogID = 0))
         this.matchData += md
+        md.bestOf = 2
         val storageRepository =
             MatchStorageRepository(context)
         storageRepository.saveMatch(md)

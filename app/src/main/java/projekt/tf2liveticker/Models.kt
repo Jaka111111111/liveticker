@@ -9,6 +9,7 @@ import kotlin.Int
 import kotlin.random.Random
 
 object MStoMinute {
+    val minutes30: Long = 1800000
     val minutes10: Long = 600000
     val minutes5: Long = 300000
     val minute1: Long = 60000
@@ -52,12 +53,11 @@ data class MatchDataList(
 @Serializable data class TeamData(
     var name: String = "",
     var id: Int = 0,
-    var players: List<PlayerLog> = emptyList(),
-    var score: Int = 0,
+    var players: List<PlayerLog> = emptyList()
 )
 @Serializable
 data class MapData(
-    val name: String = "map",
+    var name: String = "map",
     var blueScore: Int = 0,
     var redScore: Int = 0,
     var redTeamID: Int = 0,
@@ -80,7 +80,8 @@ class MatchData(
     val team2: TeamData = TeamData(id = match.clan2.id),
     var selected: Boolean = false,
     var matchEnded: Boolean = false,
-    var dateString: String = ""
+    var dateString: String = "",
+    var tiesAllowed: Boolean = true
 ) {
     var observableSelected by mutableStateOf(false)
     var mutableMapDataList = mutableListOf<MapData>()
@@ -124,10 +125,11 @@ class MatchData(
 
         val response = RetrofitLogInstance.log_api.getResults(latestMap.logID)
         latestMap.updated = false
+        latestMap.lastUpdated = response.info.date * 1000
 
         if (latestMap.length != response.length) {
             latestMap.updated = true
-            latestMap.lastUpdated = System.currentTimeMillis()
+            //latestMap.lastUpdated = System.currentTimeMillis()
         }
         //
         latestMap.length = response.length
@@ -135,11 +137,15 @@ class MatchData(
         latestMap.blueScore = response.teams["Blue"]?.score!!
 
         if (latestMap.redScore == 5 || latestMap.blueScore == 5) {
-            latestMap.mapEnded
+            latestMap.mapEnded = true
         }
 
-        if (System.currentTimeMillis() - latestMap.lastUpdated > MStoMinute.minutes10) {
+        if (System.currentTimeMillis() - latestMap.lastUpdated > MStoMinute.minutes5) {
             checkRecentLogs()
+        }
+
+        if (System.currentTimeMillis() - latestMap.lastUpdated > MStoMinute.minutes30) {
+            latestMap.mapEnded = true
         }
 
         if (latestMap.mapEnded) {
@@ -150,21 +156,21 @@ class MatchData(
     fun updateTeamForColor(color: String, mapData: MapData) {
         if (color == "red") {
             if (this.team1.id == mapData.redTeamID) {
-                this.team1.score++
+                this.team1score++
                 mapData.winner = this.team1.name
             }
             else {
-                this.team2.score++
+                this.team2score++
                 mapData.winner = this.team2.name
             }
         }
         else {
             if (this.team1.id == mapData.blueTeamID) {
-                this.team1.score++
+                this.team1score++
                 mapData.winner = this.team1.name
             }
             else {
-                this.team2.score++
+                this.team2score++
                 mapData.winner = this.team2.name
             }
         }
@@ -173,6 +179,10 @@ class MatchData(
     fun updateMatchScore(mapData: MapData) {
         if (mapData.redScore == mapData.blueScore) {
             mapData.winner = "tie"
+            if (this.tiesAllowed) {
+                team1score++
+                team2score++
+            }
         } else if (mapData.redScore > mapData.blueScore) {
             updateTeamForColor("red", mapData)
         } else {
