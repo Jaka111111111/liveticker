@@ -8,6 +8,13 @@ import kotlinx.serialization.Serializable
 import kotlin.Int
 import kotlin.random.Random
 
+object MStoMinute {
+    val minutes10: Long = 600000
+    val minutes5: Long = 300000
+    val minute1: Long = 60000
+    val seconds30: Long = 30000
+}
+
 @Serializable
 data class PlayerLog( //etf2l
     val country: String?,
@@ -43,6 +50,7 @@ data class MatchDataList(
 )
 
 @Serializable data class TeamData(
+    var name: String = "",
     var id: Int = 0,
     var players: List<PlayerLog> = emptyList(),
     var score: Int = 0,
@@ -50,12 +58,12 @@ data class MatchDataList(
 @Serializable
 data class MapData(
     val name: String = "map",
-    var blue_score: Int = 0,
-    var red_score: Int = 0,
-    var red_team: Int = 0,
-    var blue_team: Int = 0,
+    var blueScore: Int = 0,
+    var redScore: Int = 0,
+    var redTeamID: Int = 0,
+    var blueTeamID: Int = 0,
     var length: Int = 0,
-    var LogID: Int = 0,
+    var logID: Int = 0,
     var updated: Boolean = false,
     var mapEnded: Boolean = false,
     var winner: String = "",
@@ -66,15 +74,23 @@ class MatchData(
     val match: Match,
     var bestOf: Int = match.maps.size,
     var mapsNeededToWin: Int = (bestOf / 2) + 1,
-    var red_score: Int = 0,
-    var blue_score: Int = 0,
+    var team1score: Int = 0,
+    var team2score: Int = 0,
     val team1: TeamData = TeamData(id = match.clan1.id),
     val team2: TeamData = TeamData(id = match.clan2.id),
     var selected: Boolean = false,
-    var matchEnded: Boolean = false
+    var matchEnded: Boolean = false,
+    var dateString: String = ""
 ) {
     var observableSelected by mutableStateOf(false)
     var mutableMapDataList = mutableListOf<MapData>()
+
+    fun getDateStringFormatted(): String {
+        if (this.dateString == "") {
+            this.dateString = CalendarHelper().buildDateStringDDMMYY(match.time)
+        }
+        return this.dateString
+    }
 
     fun getLatestMap(): MapData {
         if (mutableMapDataList.isEmpty()) {
@@ -85,11 +101,19 @@ class MatchData(
         }
     }
 
+    fun mapInfoStringBuilder(): String {
+        var mapInfo = ""
+        mutableMapDataList.forEach {
+            mapInfo += "\n" + it.winner + " won on " + it.name + " " + it.blueScore + " - " + it.redScore
+        }
+        return mapInfo
+    }
+
     suspend fun checkRecentLogs() {
         val randID = getPlayerCombination()[0].steam?.id64
         val response = RetrofitLogInstance.log_api.getRecentLogs(randID)
         Log.d("checkRecentLogs", "${response.logs.first()}")
-        if (response.logs.first().id > getLatestMap().LogID) {
+        if (response.logs.first().id > getLatestMap().logID) {
             getLatestMap().mapEnded = true
         }
     }
@@ -98,7 +122,7 @@ class MatchData(
 
         var latestMap = getLatestMap()
 
-        val response = RetrofitLogInstance.log_api.getResults(latestMap.LogID)
+        val response = RetrofitLogInstance.log_api.getResults(latestMap.logID)
         latestMap.updated = false
 
         if (latestMap.length != response.length) {
@@ -107,34 +131,57 @@ class MatchData(
         }
         //
         latestMap.length = response.length
-        latestMap.red_score = response.teams["Red"]?.score!!
-        latestMap.blue_score = response.teams["Blue"]?.score!!
+        latestMap.redScore = response.teams["Red"]?.score!!
+        latestMap.blueScore = response.teams["Blue"]?.score!!
 
-        if (latestMap.red_team == 5 || latestMap.blue_team == 5) {
+        if (latestMap.redScore == 5 || latestMap.blueScore == 5) {
             latestMap.mapEnded
         }
 
-        checkRecentLogs()
+        if (System.currentTimeMillis() - latestMap.lastUpdated > MStoMinute.minutes10) {
+            checkRecentLogs()
+        }
 
         if (latestMap.mapEnded) {
             updateMatchScore(latestMap)
         }
     }
 
+    fun updateTeamForColor(color: String, mapData: MapData) {
+        if (color == "red") {
+            if (this.team1.id == mapData.redTeamID) {
+                this.team1.score++
+                mapData.winner = this.team1.name
+            }
+            else {
+                this.team2.score++
+                mapData.winner = this.team2.name
+            }
+        }
+        else {
+            if (this.team1.id == mapData.blueTeamID) {
+                this.team1.score++
+                mapData.winner = this.team1.name
+            }
+            else {
+                this.team2.score++
+                mapData.winner = this.team2.name
+            }
+        }
+    }
+
     fun updateMatchScore(mapData: MapData) {
-        if (mapData.red_score == mapData.blue_score) {
+        if (mapData.redScore == mapData.blueScore) {
             mapData.winner = "tie"
-        } else if (mapData.red_score > mapData.blue_score) {
-            mapData.winner = "red"
-            this.red_score++
+        } else if (mapData.redScore > mapData.blueScore) {
+            updateTeamForColor("red", mapData)
         } else {
-            mapData.winner = "blue"
-            this.blue_score++
+            updateTeamForColor("blue", mapData)
         }
 
-        if (mapData.mapEnded && (red_score == mapsNeededToWin
-                    || blue_score == mapsNeededToWin)
-        ) {
+        if (team1score == mapsNeededToWin
+            || team2score == mapsNeededToWin)
+         {
             matchEnded = true
         } else {
             mutableMapDataList.add(MapData())
