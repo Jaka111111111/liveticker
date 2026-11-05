@@ -1,6 +1,7 @@
 package projekt.tf2liveticker
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -43,7 +45,7 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
     var playerIDs by remember { mutableStateOf("") }
     var filterBySelected by remember { mutableStateOf(false) }
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize().background(color = Color(0xff3108BC))
     ) {
 
 
@@ -55,7 +57,7 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
                     if (mvm.matchData.isEmpty()) {
                         mvm.getMatchesFromEtf2l(context)
                     }
-                }
+                }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xff5D30F6))
             ) {
                 Text("Upcoming Matches")
             }
@@ -63,14 +65,14 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
             Button(
                 onClick = {
                     filterBySelected = true
-                }
+                }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xff5D30F6))
             ) {
                 Text("Marked Matches")
             }
 
             if (loading) {
 
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = Color(0xff5D30F6))
 
             }
 
@@ -82,21 +84,21 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
             }
 
         }
-        Row(verticalAlignment = Alignment.Top) {
-            OutlinedTextField(
-                value = playerIDs,
-                onValueChange = { playerIDs = it },
-                label = { Text("...") },
-                shape = RoundedCornerShape(12.dp)
-            )
-            Button(onClick = {mvm.refreshResultsDummy(context, playerIDs)}) {
-                Text("Find")
-            }
-        }
+//        Row(verticalAlignment = Alignment.Top) {
+//            OutlinedTextField(
+//                value = playerIDs,
+//                onValueChange = { playerIDs = it },
+//                label = { Text("...") },
+//                shape = RoundedCornerShape(12.dp)
+//            )
+//            Button(onClick = {mvm.refreshResultsDummy(context, playerIDs)}) {
+//                Text("Find")
+//            }
+//        }
         LazyColumn(
             modifier = Modifier.fillMaxSize()
         ) {
-            items(matchViewModels) { matchVM ->
+            items(matchViewModels.sortedBy { matchData -> matchData.match.time }) { matchVM ->
 
                 if ((!filterBySelected && matchVM.match.time*1000 + 20000 > System.currentTimeMillis())
                     || (filterBySelected && matchVM.observableSelected)) {
@@ -111,7 +113,7 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
                         onClick = {
                             mvm.nextPageToLoad++
                             mvm.getMatchesFromEtf2l(context, page = mvm.nextPageToLoad)
-                        }
+                        }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xff5D30F6))
                     ) {
                         Text("Load page ${mvm.nextPageToLoad + 1}")
                     }
@@ -123,46 +125,16 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
 }
 
 @Composable
-fun TeamAvatar(data: String) {
-    CoilImage(
-        data = data,
-        contentDescription = "android",
-        alignment = Alignment.TopCenter,
-        modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight(.60f),
-        contentScale = ContentScale.Crop,
-        loading = {
-            Box(
-                modifier = Modifier.background(
-                    shape = RoundedCornerShape(20.dp),
-                    color = Color.White
-                )
-            )
-        },
-        error = {
-            Box(
-                modifier = Modifier.background(
-                    shape = RoundedCornerShape(20.dp),
-                    color = Color.White
-                )
-            )
-        }
-    )
-}
-
-
-@Composable
 fun MatchOverview(matchData: MatchData, mainViewModel: MainViewModel)
 {
 
     val context = LocalContext.current
 
-    val date = Date(matchData.match.time*1000)
     Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp).background(color = androidx.compose.ui.graphics.Color(0xFF6750A4))
+                .padding(10.dp)
+                .background(Color(0xff3D0AEB))
         )
     {
         Text(
@@ -183,7 +155,7 @@ fun MatchOverview(matchData: MatchData, mainViewModel: MainViewModel)
                     context,
                     MatchData(matchData.match),
                     selected = matchData.observableSelected)
-            }
+            }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xff5D30F6))
         ) {
             if (matchData.observableSelected) {
                 Text("Dont care")
