@@ -41,7 +41,7 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
     val error = mvm.error
     val context = LocalContext.current
     var playerIDs by remember { mutableStateOf("") }
-    var filter by remember { mutableIntStateOf(0) }
+    var filterBySelected by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -51,7 +51,7 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
 
             Button(
                 onClick = {
-                    filter = 0
+                    filterBySelected = false
                     if (mvm.matchData.isEmpty()) {
                         mvm.getMatchesFromEtf2l(context)
                     }
@@ -62,7 +62,7 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
 
             Button(
                 onClick = {
-                    filter = 1
+                    filterBySelected = true
                 }
             ) {
                 Text("Marked Matches")
@@ -98,22 +98,23 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>())
         ) {
             items(matchViewModels) { matchVM ->
 
-                if ((filter == 0 && matchVM.match.time*1000 + 20000 > System.currentTimeMillis()) ||
-                    (filter == 1 && matchVM.observableSelected)) {
+                if ((!filterBySelected && matchVM.match.time*1000 + 20000 > System.currentTimeMillis())
+                    || (filterBySelected && matchVM.observableSelected)) {
                     MatchOverview(
                         matchData = matchVM, mvm
                     )
                 }
             }
             item {
-
-                Button(
-                    onClick = {
-                        mvm.nextPageToLoad++
-                        mvm.getMatchesFromEtf2l(context, page = mvm.nextPageToLoad)
+                if (!filterBySelected) {
+                    Button(
+                        onClick = {
+                            mvm.nextPageToLoad++
+                            mvm.getMatchesFromEtf2l(context, page = mvm.nextPageToLoad)
+                        }
+                    ) {
+                        Text("Load page ${mvm.nextPageToLoad + 1}")
                     }
-                ) {
-                    Text("Load page ${mvm.nextPageToLoad+1}")
                 }
             }
         }

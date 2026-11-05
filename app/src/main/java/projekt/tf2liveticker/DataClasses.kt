@@ -1,12 +1,7 @@
 package projekt.tf2liveticker
 
-import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import kotlinx.serialization.Serializable
 import kotlin.Int
-import kotlin.random.Random
 
 object MsToMinute {
     val minutes30: Long = 1800000
