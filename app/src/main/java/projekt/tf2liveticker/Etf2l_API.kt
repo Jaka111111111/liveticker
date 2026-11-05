@@ -14,14 +14,3 @@ interface Etf2l_API {
     suspend fun getTeam(@Path("id") id: Int): TeamResponse //
 }
 
-interface Log_API {
-
-    @GET("log")
-    suspend fun getRecentLogs(
-        @Query("player") id: String?,
-        @Query("limit") limit: Int = 1
-    ): RecentLogResponse
-
-    @GET("log/{id}")
-    suspend fun getResults(@Path("id") id: Int): LogResponse
-}
