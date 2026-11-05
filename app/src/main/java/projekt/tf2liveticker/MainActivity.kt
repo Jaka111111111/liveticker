@@ -33,6 +33,3 @@ class MainActivity : ComponentActivity() {
         matchDataStore.updateData { matchDataList }
     }
 }
-
-
-//val Context.dataStore by dataStore("MatchData.json", MatchDataSerializer)
