@@ -8,12 +8,17 @@ import kotlinx.serialization.Serializable
 import kotlin.Int
 import kotlin.random.Random
 
-object MStoMinute {
+object MsToMinute {
     val minutes30: Long = 1800000
     val minutes10: Long = 600000
     val minutes5: Long = 300000
     val minute1: Long = 60000
     val seconds30: Long = 30000
+}
+
+object SecToMinute {
+    val minutes4: Long = 240
+    val minutes5: Long = 300
 }
 
 @Serializable
@@ -105,7 +110,7 @@ class MatchData(
     fun mapInfoStringBuilder(): String {
         var mapInfo = ""
         mutableMapDataList.forEach {
-            mapInfo += "\n" + it.winner + " won on " + it.name + " " + it.blueScore + " - " + it.redScore
+            mapInfo += it.winner + " won on " + it.name + " " + it.blueScore + " - " + it.redScore
         }
         return mapInfo
     }
@@ -130,21 +135,27 @@ class MatchData(
         if (latestMap.length != response.length) {
             latestMap.updated = true
             //latestMap.lastUpdated = System.currentTimeMillis()
+
+            if (response.teams["Red"]?.score!! + response.teams["Blue"]?.score!! == latestMap.redScore + latestMap.blueScore
+                && response.rounds.last().winner != null) {
+                latestMap.mapEnded = true
+            }
         }
         //
         latestMap.length = response.length
         latestMap.redScore = response.teams["Red"]?.score!!
         latestMap.blueScore = response.teams["Blue"]?.score!!
 
+
         if (latestMap.redScore == 5 || latestMap.blueScore == 5) {
             latestMap.mapEnded = true
         }
 
-        if (System.currentTimeMillis() - latestMap.lastUpdated > MStoMinute.minutes5) {
+        if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.minutes5) {
             checkRecentLogs()
         }
 
-        if (System.currentTimeMillis() - latestMap.lastUpdated > MStoMinute.minutes30) {
+        if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.minutes30) {
             latestMap.mapEnded = true
         }
 
@@ -303,10 +314,17 @@ data class LogResponse(
     val teams: Map<String, TeamStats>,
     val players: Map<String, PlayerStats>,
     val names: Map<String, String>,
+    val rounds: Array<LogRound>,
     val success: Boolean,
     val length: Int,
     val info: LogInfo
     )
+
+@Serializable
+data class LogRound(
+    val start_time: Long,
+    val winner: String
+)
 
 @Serializable
 data class TeamStats (

@@ -172,7 +172,7 @@ class MatchRepository() {
 
 
         if (delay < 0) {
-            delay = MStoMinute.seconds30
+            delay = MsToMinute.seconds30
         }
 //        val constraints = Constraints.Builder()
 //            .setRequiredNetworkType(NetworkType.CONNECTED)
