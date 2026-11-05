@@ -2,8 +2,6 @@ package projekt.tf2liveticker
 
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Calendar
-import java.util.Date
 
 class CalendarHelper {
     fun buildDateStringDDMMYY(timestamp: Long): String {
