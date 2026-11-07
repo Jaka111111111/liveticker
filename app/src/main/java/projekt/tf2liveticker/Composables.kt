@@ -141,6 +141,14 @@ fun MatchOverview(matchData: MatchData, mainViewModel: MainViewModel)
         Text(
             text = matchData.getDateStringFormatted(), color = White
         )
+        Text(
+            text = if (matchData.matchEnded) {
+                matchData.matchInfoStringBuilder()
+            }
+            else {
+                ""//matchData.mapInfoStringBuilder()
+            }
+            , color = White)
         Button(
             onClick = {
                 matchData.observableSelected = !matchData.observableSelected
