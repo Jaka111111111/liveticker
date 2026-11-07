@@ -64,10 +64,10 @@ class MatchUpdateWorker(
                 if (matchData.matchEnded) {
                     NotificationHelper.showNotification(
                         context = applicationContext,
-                        title = "${matchData.match.clan1.name} vs ${matchData.match.clan2.name} concluded!",
+                        title = "${matchData.match.clan1.name} vs ${matchData.match.clan2.name} concluded!"
+                        + "\n ${matchData.team1score} - ${matchData.team2score}",
 
-                        message = "${matchData.team1score} - ${matchData.team2score} \n" +
-                                matchData.mapInfoStringBuilder()
+                        message = matchData.mapInfoStringBuilder()
                                 ,
                         notificationId = matchId
                     )

@@ -39,12 +39,21 @@ class MatchData(
             return mutableMapDataList.last()
         }
     }
-
     fun mapInfoStringBuilder(): String {
         var mapInfo = ""
         mutableMapDataList.forEach {
-            mapInfo += it.winner + " won on " + it.name + " " + it.blueScore + " - " + it.redScore
-        }
+            if (it.winner != "tie") {
+                mapInfo += it.winner + " won on " + it.name + " " + "" +
+                        (if (it.blueScore > it.redScore) {
+                            it.blueScore.toString() + " - " + it.redScore
+                        } else {
+                            it.redScore.toString() + " - " + it.blueScore
+                        }) + "\n"
+            }
+            else {
+                mapInfo += it.name + " tied: " + it.redScore.toString() + " - " + it.blueScore
+            }
+            }
         return mapInfo
     }
 
