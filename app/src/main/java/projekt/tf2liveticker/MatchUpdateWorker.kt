@@ -66,7 +66,7 @@ class MatchUpdateWorker(
 
             e.printStackTrace()
 
-            Result.retry()
+            Result.failure()
         }
     }
 
