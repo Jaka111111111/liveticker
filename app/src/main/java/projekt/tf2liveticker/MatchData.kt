@@ -39,22 +39,40 @@ class MatchData(
             return mutableMapDataList.last()
         }
     }
+
     fun mapInfoStringBuilder(): String {
-        var mapInfo = ""
+        val latest = getLatestMap()
+        val minutes = if (latest.length / 60 < 10) { "0" } else { "" } + latest.length / 60
+        val seconds = if (latest.length % 60 < 10) { "0" } else { "" } + latest.length % 60 //arrrrrgh
+        val mapScore =
+            (if (latest.blueTeamID == this.team1.id) {
+                latest.blueScore.toString() + " - " + latest.redScore
+            } else {
+                latest.redScore.toString() + " - " + latest.blueScore
+            })
+        val ended = (if (latest.mapEnded) {
+            "Final score after " + latest.length
+        } else {
+            "score after minute "
+        }) + minutes + ":" + seconds
+        return mapScore + ended
+    }
+
+    fun matchInfoStringBuilder(): String {
+        var matchInfo = ""
         mutableMapDataList.forEach {
             if (it.winner != "tie") {
-                mapInfo += it.winner + " won on " + it.name + " " + "" +
+                matchInfo += it.winner + " won on " + it.name + " " + "" +
                         (if (it.blueScore > it.redScore) {
                             it.blueScore.toString() + " - " + it.redScore
                         } else {
                             it.redScore.toString() + " - " + it.blueScore
                         }) + "\n"
+            } else {
+                matchInfo += it.name + " tied: " + it.redScore.toString() + " - " + it.blueScore
             }
-            else {
-                mapInfo += it.name + " tied: " + it.redScore.toString() + " - " + it.blueScore
-            }
-            }
-        return mapInfo
+        }
+        return matchInfo
     }
 
     suspend fun checkRecentLogs() {
@@ -79,7 +97,8 @@ class MatchData(
             //latestMap.lastUpdated = System.currentTimeMillis()
 
             if (response.teams["Red"]?.score!! + response.teams["Blue"]?.score!! == latestMap.redScore + latestMap.blueScore
-                && response.rounds.last().winner != null) {
+                && response.rounds.last().winner != null
+            ) {
                 latestMap.mapEnded = true
             }
         }
@@ -111,18 +130,15 @@ class MatchData(
             if (this.team1.id == mapData.redTeamID) {
                 this.team1score++
                 mapData.winner = this.team1.name
-            }
-            else {
+            } else {
                 this.team2score++
                 mapData.winner = this.team2.name
             }
-        }
-        else {
+        } else {
             if (this.team1.id == mapData.blueTeamID) {
                 this.team1score++
                 mapData.winner = this.team1.name
-            }
-            else {
+            } else {
                 this.team2score++
                 mapData.winner = this.team2.name
             }
@@ -143,8 +159,8 @@ class MatchData(
         }
 
         if (team1score == mapsNeededToWin
-            || team2score == mapsNeededToWin)
-        {
+            || team2score == mapsNeededToWin
+        ) {
             matchEnded = true
         } else {
             mutableMapDataList.add(MapData())
@@ -161,7 +177,7 @@ class MatchData(
         //}
         Log.d("getPlayerCombination", "team 1: ${team1.players}")
         Log.d("getPlayerCombination", "team 2: ${team2.players}")
-        if (team1.players.size == 1 && team2.players.size == 1) {
+        if (team1.players.size == 1 && team2.players.size == 1) { //testing purposes :DDD
             return listOf(
                 team1.players[0],
                 team2.players[0]

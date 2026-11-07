@@ -37,42 +37,25 @@ class MatchUpdateWorker(
                     val latestMap = matchData.getLatestMap()
                     if (latestMap.updated || latestMap.mapEnded) {
 
-
                         NotificationHelper.showNotification(
                             context = applicationContext,
                             title = "${matchData.match.clan1.name} vs ${matchData.match.clan2.name}",
-
-                            message = "${latestMap.blueScore} - ${latestMap.redScore} on map ${matchData.mutableMapDataList.size} ${latestMap.name} \n"
-                            +
-                                    "${
-                                if (latestMap.mapEnded) {
-                                    "Final Score after"
-                                } else {
-                                    "Minute"
-                                }
-                            }  ${(latestMap.length / 60)}:${(latestMap.length % 60)}",
+                            message = matchData.mapInfoStringBuilder(),
                             notificationId = latestMap.logID
                         )
-
                     }
-
                 }
-
                 //matchData.match.time = (System.currentTimeMillis() / 1000) + 30
                 storageRepository.updateMatch(matchData)
-
                 if (matchData.matchEnded) {
                     NotificationHelper.showNotification(
                         context = applicationContext,
                         title = "${matchData.match.clan1.name} vs ${matchData.match.clan2.name} concluded!"
-                        + "\n ${matchData.team1score} - ${matchData.team2score}",
-
-                        message = matchData.mapInfoStringBuilder()
-                                ,
+                                + "\n ${matchData.team1score} - ${matchData.team2score}",
+                        message = matchData.matchInfoStringBuilder(),
                         notificationId = matchId
                     )
-                }
-                else {
+                } else {
                     repository.scheduleMatch(applicationContext, matchData.match)
                 }
             }
