@@ -51,9 +51,9 @@ class MatchData(
                 latest.redScore.toString() + " - " + latest.blueScore
             })
         val ended = (if (latest.mapEnded) {
-            "Final score after " + latest.length
+            " final score after " + latest.length
         } else {
-            "score after minute "
+            " score after minute "
         }) + minutes + ":" + seconds
         return mapScore + ended
     }
@@ -129,18 +129,18 @@ class MatchData(
         if (color == "red") {
             if (this.team1.id == mapData.redTeamID) {
                 this.team1score++
-                mapData.winner = this.team1.name
+                mapData.winner = this.match.clan1.name
             } else {
                 this.team2score++
-                mapData.winner = this.team2.name
+                mapData.winner = this.match.clan2.name
             }
         } else {
             if (this.team1.id == mapData.blueTeamID) {
                 this.team1score++
-                mapData.winner = this.team1.name
+                mapData.winner = this.match.clan1.name
             } else {
                 this.team2score++
-                mapData.winner = this.team2.name
+                mapData.winner = this.match.clan1.name
             }
         }
     }

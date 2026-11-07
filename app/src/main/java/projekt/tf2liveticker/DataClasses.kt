@@ -89,7 +89,7 @@ data class Clan(
 @Serializable
 data class Team(
     val id: Int,
-    val name: String,
+    //val name: String,
     val country: String?,
     val competitions: Map<String, Competition>,
     val players: List<PlayerLog>

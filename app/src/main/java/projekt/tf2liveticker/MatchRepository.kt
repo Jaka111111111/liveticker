@@ -77,7 +77,7 @@ class MatchRepository() {
                         val s64 = steam?.id64
                         val steam3 = s64?.toLong()
                         if ("[U:1:${steam3?.minus(76561197960265728)}]" == id) {     //it.steam?.id3 == id) {
-                            if (player.team == "red") {
+                            if (player.team == "Red") { //case sensitive..
                                 matchData.mutableMapDataList.last().redTeamID = matchData.team1.id
                                 matchData.mutableMapDataList.last().blueTeamID = matchData.team2.id
                             }
@@ -87,7 +87,7 @@ class MatchRepository() {
 
                     matchData.team2.players.forEach {
                         if ("[U:1:${it.steam?.id64?.toLong()?.minus(76561197960265728)}]" == id) { //it.steam?.id3 == id) {
-                            if (player.team == "red") {
+                            if (player.team == "Red") {
                                 matchData.mutableMapDataList.last().redTeamID = matchData.team2.id
                                 matchData.mutableMapDataList.last().blueTeamID = matchData.team1.id
                             }
