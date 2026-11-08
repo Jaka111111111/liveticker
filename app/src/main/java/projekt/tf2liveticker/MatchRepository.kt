@@ -123,7 +123,6 @@ class MatchRepository() {
         md.team2.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[1]), ""))
         //md.mutableMapDataList.add(MapData(LogID = 0))
         this.matchData += md
-        md.bestOf = 2
         val storageRepository =
             MatchStorageRepository(context)
         storageRepository.saveMatch(md)

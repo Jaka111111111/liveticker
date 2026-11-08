@@ -19,7 +19,8 @@ class MatchData(
     var selected: Boolean = false,
     var matchEnded: Boolean = false,
     var dateString: String = "",
-    var tiesAllowed: Boolean = true
+    var tiesAllowed: Boolean = true,
+    var workerActive : Boolean = false
 ) {
     var observableSelected by mutableStateOf(false)
     var mutableMapDataList = mutableListOf<MapData>()
@@ -85,44 +86,49 @@ class MatchData(
     }
 
     suspend fun updateMapScore() {
+        if (!workerActive) {
 
-        var latestMap = getLatestMap()
+            workerActive = true
 
-        val response = RetrofitLogInstance.log_api.getResults(latestMap.logID)
-        latestMap.updated = false
-        latestMap.lastUpdated = response.info.date * 1000
+            var latestMap = getLatestMap()
 
-        if (latestMap.length != response.length) {
-            latestMap.updated = true
-            //latestMap.lastUpdated = System.currentTimeMillis()
+            val response = RetrofitLogInstance.log_api.getResults(latestMap.logID)
+            latestMap.updated = false
+            latestMap.lastUpdated = response.info.date * 1000
 
-            if (response.teams["Red"]?.score!! + response.teams["Blue"]?.score!! == latestMap.redScore + latestMap.blueScore
-                && response.rounds.last().winner != null
-            ) {
+            if (latestMap.length != response.length) {
+                latestMap.updated = true
+                //latestMap.lastUpdated = System.currentTimeMillis()
+
+                if (response.teams["Red"]?.score!! + response.teams["Blue"]?.score!! == latestMap.redScore + latestMap.blueScore
+                    && response.rounds.last().winner != null
+                ) {
+                    latestMap.mapEnded = true
+                }
+            }
+            //
+            latestMap.length = response.length
+            latestMap.redScore = response.teams["Red"]?.score!!
+            latestMap.blueScore = response.teams["Blue"]?.score!!
+
+
+            if (latestMap.redScore == 5 || latestMap.blueScore == 5) {
                 latestMap.mapEnded = true
             }
-        }
-        //
-        latestMap.length = response.length
-        latestMap.redScore = response.teams["Red"]?.score!!
-        latestMap.blueScore = response.teams["Blue"]?.score!!
 
+            if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.minutes5) {
+                checkRecentLogs()
+            }
 
-        if (latestMap.redScore == 5 || latestMap.blueScore == 5) {
-            latestMap.mapEnded = true
-        }
+            if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.minutes30) {
+                latestMap.mapEnded = true
+            }
 
-        if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.minutes5) {
-            checkRecentLogs()
+            if (latestMap.mapEnded) {
+                updateMatchScore(latestMap)
+            }
         }
-
-        if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.minutes30) {
-            latestMap.mapEnded = true
-        }
-
-        if (latestMap.mapEnded) {
-            updateMatchScore(latestMap)
-        }
+        workerActive = false
     }
 
     fun updateTeamForColor(color: String, mapData: MapData) {
