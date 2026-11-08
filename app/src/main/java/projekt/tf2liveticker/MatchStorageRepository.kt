@@ -21,8 +21,14 @@ class MatchStorageRepository(
 
         context.matchDataStore.updateData { currentData ->
 
+            for (oldMatchData in currentData.MatchData) {
+                if (matchData.match.id == oldMatchData.match.id) {
+                    oldMatchData.match.time = matchData.match.time
+                }
+            } //???
             if (currentData.MatchData.any { it.match.id == matchData.match.id }) {
                 currentData
+
             } else {
                 currentData.copy(
                     MatchData = currentData.MatchData + matchData
