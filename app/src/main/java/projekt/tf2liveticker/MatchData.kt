@@ -20,7 +20,8 @@ class MatchData(
     var matchEnded: Boolean = false,
     var dateString: String = "",
     var tiesAllowed: Boolean = true,
-    var workerActive : Boolean = false
+    var workerActive : Boolean = false,
+    var mapEndedReason: String = ""
 ) {
     var observableSelected by mutableStateOf(false)
     var mutableMapDataList = mutableListOf<MapData>()
@@ -52,7 +53,7 @@ class MatchData(
                 latest.redScore.toString() + " - " + latest.blueScore
             })
         val ended = (if (latest.mapEnded) {
-            " final score after " + latest.length
+            " final score after " + latest.length + mapEndedReason
         } else {
             " score after minute "
         }) + minutes + ":" + seconds
@@ -82,6 +83,7 @@ class MatchData(
         Log.d("checkRecentLogs", "${response.logs.first()}")
         if (response.logs.first().id > getLatestMap().logID) {
             getLatestMap().mapEnded = true
+            this.mapEndedReason = "RecentLogFound"
         }
     }
 
@@ -104,6 +106,7 @@ class MatchData(
                     && response.rounds.last().winner != null
                 ) {
                     latestMap.mapEnded = true
+                    this.mapEndedReason = "LogUpdateWithoutScoreChangeOrRoundReset"
                 }
             }
             //
@@ -114,6 +117,7 @@ class MatchData(
 
             if (latestMap.redScore == 5 || latestMap.blueScore == 5) {
                 latestMap.mapEnded = true
+                this.mapEndedReason = "ScoreLimitReached"
             }
 
             if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.minutes5) {
@@ -122,6 +126,7 @@ class MatchData(
 
             if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.minutes30) {
                 latestMap.mapEnded = true
+                this.mapEndedReason = "TimeoutReached"
             }
 
             if (latestMap.mapEnded) {

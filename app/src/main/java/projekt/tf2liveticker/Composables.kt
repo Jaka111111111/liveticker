@@ -44,7 +44,7 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>()) {
     var filterByString by remember { mutableStateOf("") }
 
     LaunchedEffect(context) {
-        mvm.getLocalMatches(context)
+        mvm.getMatchesFromEtf2l(context)
     }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -62,7 +62,7 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>()) {
             Button(
                 onClick = {
                     filterBySelected = false
-                        mvm.getMatchesFromEtf2l(context)
+                        mvm.getLocalMatches(context)
                 }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xff272f36))
             ) {
                 MediumTextWhite("Upcoming Matches")
