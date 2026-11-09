@@ -196,4 +196,16 @@ class MatchData(
         }
 
     }
+
+    fun containsFilter(filter: String): Boolean {
+        if ((match.clan1.name+match.clan2.name
+                    +match.competition
+                    +match.division).uppercase()
+                .contains(filter.uppercase())) {
+            return true
+        }
+        else {
+            return false
+        }
+    }
 }
