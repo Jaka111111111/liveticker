@@ -20,12 +20,25 @@ class MatchData(
     var matchEnded: Boolean = false,
     var dateString: String = "",
     var tiesAllowed: Boolean = true,
-    var workerActive : Boolean = false,
+    var workerActive: Boolean = false,
     var mapEndedReason: String = ""
 ) {
     var observableSelected by mutableStateOf(false)
     var mutableMapDataList = mutableListOf<MapData>()
 
+    fun logIDNotInUse(LogID: Int): Boolean {
+        if (mutableMapDataList.isEmpty()) {
+            return true
+        }
+        else {
+            for (map in mutableMapDataList) {
+                if (map.logID == LogID) {
+                    return false
+                }
+            }
+            return true
+        }
+    }
     fun getDateStringFormatted(): String {
         if (this.dateString == "") {
             this.dateString = CalendarHelper().buildDateStringDDMMYY(match.time)
@@ -42,22 +55,29 @@ class MatchData(
         }
     }
 
-    fun mapInfoStringBuilder(): String {
-        val latest = getLatestMap()
-        val minutes = if (latest.length / 60 < 10) { "0" } else { "" } + latest.length / 60
-        val seconds = if (latest.length % 60 < 10) { "0" } else { "" } + latest.length % 60 //arrrrrgh
-        val mapScore =
-            (if (latest.blueTeamID == this.team1.id) {
-                latest.blueScore.toString() + " - " + latest.redScore
-            } else {
-                latest.redScore.toString() + " - " + latest.blueScore
-            })
-        val ended = (if (latest.mapEnded) {
-            " final score after " + latest.length + mapEndedReason
+    fun mapInfoStringBuilder(mapData: MapData = getLatestMap()): String {
+        val minutes = if (mapData.length / 60 < 10) {
+            "0"
         } else {
-            " score after minute "
+            ""
+        } + mapData.length / 60
+        val seconds = if (mapData.length % 60 < 10) {
+            "0"
+        } else {
+            ""
+        } + mapData.length % 60 //arrrrrgh
+        val mapScore =
+            (if (mapData.blueTeamID == this.team1.id) {
+                mapData.blueScore.toString() + " - " + mapData.redScore
+            } else {
+                mapData.redScore.toString() + " - " + mapData.blueScore
+            })
+        val ended = (if (mapData.mapEnded) {
+            " final score on " + mapData.name + " after "
+        } else {
+            " score on "+ mapData.name +" after "
         }) + minutes + ":" + seconds
-        return mapScore + ended
+        return mapScore + ended + mapEndedReason
     }
 
     fun matchInfoStringBuilder(): String {
@@ -88,52 +108,52 @@ class MatchData(
     }
 
     suspend fun updateMapScore() {
-        if (!workerActive) {
 
-            workerActive = true
+        var latestMap = getLatestMap()
 
-            var latestMap = getLatestMap()
+        val response = RetrofitLogInstance.log_api.getResults(latestMap.logID)
+        latestMap.updated = false
+        latestMap.lastUpdated = response.info.date * 1000
 
-            val response = RetrofitLogInstance.log_api.getResults(latestMap.logID)
-            latestMap.updated = false
-            latestMap.lastUpdated = response.info.date * 1000
+        if (latestMap.length != response.length) {
+            latestMap.updated = true
+            //latestMap.lastUpdated = System.currentTimeMillis()
 
-            if (latestMap.length != response.length) {
-                latestMap.updated = true
-                //latestMap.lastUpdated = System.currentTimeMillis()
-
-                if (response.teams["Red"]?.score!! + response.teams["Blue"]?.score!! == latestMap.redScore + latestMap.blueScore
-                    && response.rounds.last().winner != null
-                ) {
-                    latestMap.mapEnded = true
-                    this.mapEndedReason = "LogUpdateWithoutScoreChangeOrRoundReset"
-                }
-            }
-            //
-            latestMap.length = response.length
-            latestMap.redScore = response.teams["Red"]?.score!!
-            latestMap.blueScore = response.teams["Blue"]?.score!!
-
-
-            if (latestMap.redScore == 5 || latestMap.blueScore == 5) {
+            if (response.teams["Red"]?.score!! + response.teams["Blue"]?.score!! == latestMap.redScore + latestMap.blueScore
+                && response.rounds.last().winner != null
+            ) {
                 latestMap.mapEnded = true
-                this.mapEndedReason = "ScoreLimitReached"
+                this.mapEndedReason = "LogUpdateWithoutScoreChangeOrRoundReset"
             }
+        }
+        //
+        latestMap.length = response.length
+        latestMap.redScore = response.teams["Red"]?.score!!
+        latestMap.blueScore = response.teams["Blue"]?.score!!
 
-            if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.minutes5) {
-                checkRecentLogs()
-            }
 
-            if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.minutes30) {
-                latestMap.mapEnded = true
-                this.mapEndedReason = "TimeoutReached"
-            }
+        if (latestMap.redScore == 5 || latestMap.blueScore == 5) {
+            latestMap.mapEnded = true
+            this.mapEndedReason = "ScoreLimitReached"
+        }
 
-            if (latestMap.mapEnded) {
+        if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.minutes5) {
+            checkRecentLogs()
+        }
+
+        if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.minutes30) {
+            latestMap.mapEnded = true
+            this.mapEndedReason = "TimeoutReached"
+        }
+
+        if (latestMap.mapEnded) {
+            if (!latestMap.mapConsidered) {
+                latestMap.mapConsidered = true
                 updateMatchScore(latestMap)
             }
         }
-        workerActive = false
+
+
     }
 
     fun updateTeamForColor(color: String, mapData: MapData) {
@@ -157,25 +177,27 @@ class MatchData(
     }
 
     fun updateMatchScore(mapData: MapData) {
-        if (mapData.redScore == mapData.blueScore) {
-            mapData.winner = "tie"
-            if (this.tiesAllowed) {
-                team1score++
-                team2score++
-            }
-        } else if (mapData.redScore > mapData.blueScore) {
-            updateTeamForColor("red", mapData)
-        } else {
-            updateTeamForColor("blue", mapData)
-        }
 
-        if (team1score == mapsNeededToWin
-            || team2score == mapsNeededToWin
-        ) {
-            matchEnded = true
-        } else {
-            mutableMapDataList.add(MapData())
-        }
+            if (mapData.redScore == mapData.blueScore) {
+                mapData.winner = "tie"
+                if (this.tiesAllowed) {
+                    team1score++
+                    team2score++
+                }
+            } else if (mapData.redScore > mapData.blueScore) {
+                updateTeamForColor("red", mapData)
+            } else {
+                updateTeamForColor("blue", mapData)
+            }
+
+            if (team1score == mapsNeededToWin
+                || team2score == mapsNeededToWin
+            ) {
+                matchEnded = true
+            } else {
+                mutableMapDataList.add(MapData())
+            }
+
     }
 
     fun getPlayerCombination(): List<PlayerLog> {
@@ -203,13 +225,13 @@ class MatchData(
     }
 
     fun containsFilter(filter: String): Boolean {
-        if ((match.clan1.name+match.clan2.name
-                    +match.competition
-                    +match.division).uppercase()
-                .contains(filter.uppercase())) {
+        if ((match.clan1.name + match.clan2.name
+                    + match.competition
+                    + match.division).uppercase()
+                .contains(filter.uppercase())
+        ) {
             return true
-        }
-        else {
+        } else {
             return false
         }
     }

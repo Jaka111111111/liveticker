@@ -39,71 +39,81 @@ class MatchRepository() {
                 findLiveLog(matchData)
             }
             else {
-
-                val latest =
-                    RetrofitLogInstance.log_api.getResults(randomPlayerRequest.logs.first().id)
-
-                Log.d(
-                    "findLiveLog",
-                    "Log aktuell genug?: ${(latest.info.date > matchData.match.time)}"
-                )
+                if (matchData.logIDNotInUse(randomPlayerRequest.logs.first().id)) {
 
 
-                var relevantPlayerCounter = 0
+                    val latest =
+                        RetrofitLogInstance.log_api.getResults(randomPlayerRequest.logs.first().id)
 
-                Log.d("findLiveLog", "Ausgewähltes Log: ${latest}")
-                val players = latest.players.map { (steam3Id, stats) ->
-
-                    Player(
-                        steam3Id = steam3Id,
-                        name = latest.names[steam3Id] ?: "Unknown",
-                        team = stats.team,
-                        kills = stats.kills,
-                        deaths = stats.deaths,
-                        assists = stats.assists,
-                        damage = stats.dmg
+                    Log.d(
+                        "findLiveLog",
+                        "Log aktuell genug?: ${(latest.info.date > matchData.match.time)}"
                     )
-                }
-                Log.d("findLiveLog", players.size.toString())
 
 
-                players.forEach { player ->
-                    val id = player.steam3Id
+                    var relevantPlayerCounter = 0
 
-                    matchData.team1.players.forEach { //später ändern!!!!
+                    Log.d("findLiveLog", "Ausgewähltes Log: ${latest}")
+                    val players = latest.players.map { (steam3Id, stats) ->
 
-                        Log.d("findLiveLog", "Verglichen mit: $id")
-                        val steam = it.steam
-                        val s64 = steam?.id64
-                        val steam3 = s64?.toLong()
-                        if ("[U:1:${steam3?.minus(76561197960265728)}]" == id) {     //it.steam?.id3 == id) {
-                            if (player.team == "Red") { //case sensitive..
-                                matchData.mutableMapDataList.last().redTeamID = matchData.team1.id
-                                matchData.mutableMapDataList.last().blueTeamID = matchData.team2.id
+                        Player(
+                            steam3Id = steam3Id,
+                            name = latest.names[steam3Id] ?: "Unknown",
+                            team = stats.team,
+                            kills = stats.kills,
+                            deaths = stats.deaths,
+                            assists = stats.assists,
+                            damage = stats.dmg
+                        )
+                    }
+                    Log.d("findLiveLog", players.size.toString())
+
+
+                    players.forEach { player ->
+                        val id = player.steam3Id
+
+                        matchData.team1.players.forEach { //später ändern!!!!
+
+                            Log.d("findLiveLog", "Verglichen mit: $id")
+                            val steam = it.steam
+                            val s64 = steam?.id64
+                            val steam3 = s64?.toLong()
+                            if ("[U:1:${steam3?.minus(76561197960265728)}]" == id) {     //it.steam?.id3 == id) {
+                                if (player.team == "Red") { //case sensitive..
+                                    matchData.mutableMapDataList.last().redTeamID =
+                                        matchData.team1.id
+                                    matchData.mutableMapDataList.last().blueTeamID =
+                                        matchData.team2.id
+                                }
+                                relevantPlayerCounter++
                             }
-                            relevantPlayerCounter++
+                        }
+
+                        matchData.team2.players.forEach {
+                            if ("[U:1:${
+                                    it.steam?.id64?.toLong()?.minus(76561197960265728)
+                                }]" == id
+                            ) { //it.steam?.id3 == id) {
+                                if (player.team == "Red") {
+                                    matchData.mutableMapDataList.last().redTeamID =
+                                        matchData.team2.id
+                                    matchData.mutableMapDataList.last().blueTeamID =
+                                        matchData.team1.id
+                                }
+                                relevantPlayerCounter++
+                            }
                         }
                     }
 
-                    matchData.team2.players.forEach {
-                        if ("[U:1:${it.steam?.id64?.toLong()?.minus(76561197960265728)}]" == id) { //it.steam?.id3 == id) {
-                            if (player.team == "Red") {
-                                matchData.mutableMapDataList.last().redTeamID = matchData.team2.id
-                                matchData.mutableMapDataList.last().blueTeamID = matchData.team1.id
-                            }
-                            relevantPlayerCounter++
-                        }
+                    Log.d("findLiveLog", "Relevante Spieler: ${relevantPlayerCounter}")
+
+                    if (relevantPlayerCounter >= 8
+                        ||
+                        relevantPlayerCounter == (matchData.team2.players.size + matchData.team1.players.size)
+                    ) {
+                        matchData.mutableMapDataList.last().logID = randomPlayerRequest.logs[0].id
+                        matchData.mutableMapDataList.last().name = randomPlayerRequest.logs[0].map
                     }
-                }
-
-                Log.d("findLiveLog", "Relevante Spieler: ${relevantPlayerCounter}")
-
-                if (relevantPlayerCounter >= 8
-                    ||
-                    relevantPlayerCounter == (matchData.team2.players.size+matchData.team1.players.size))
-                {
-                    matchData.mutableMapDataList.last().logID = randomPlayerRequest.logs[0].id
-                    matchData.mutableMapDataList.last().name = randomPlayerRequest.logs[0].map
                 }
             }
         }
@@ -116,7 +126,7 @@ class MatchRepository() {
         val d = Division(9, "hi", 1, 1)
         val ms = emptyList<String>()
         val m = Match(0, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
-        val md = MatchData(m, bestOf = 1, team1 = TeamData(name = "BBBB", id = 0), team2 = TeamData(name = "A",id = 1))
+        val md = MatchData(m, bestOf = 1, mapsNeededToWin = 1, team1 = TeamData(name = "BBBB", id = 0), team2 = TeamData(name = "A",id = 1))
         md.selected = true
         val players = playerIDs.split(",")
         md.team1.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[0]), ""))

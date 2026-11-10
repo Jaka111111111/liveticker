@@ -103,23 +103,24 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>()) {
                 shape = RoundedCornerShape(12.dp)
             )
         }
-//        Row(verticalAlignment = Alignment.Top) {
-//            OutlinedTextField(
-//                value = playerIDs,
-//                onValueChange = { playerIDs = it },
-//                label = { Text("...") },
-//                shape = RoundedCornerShape(12.dp)
-//            )
-//            Button(onClick = {mvm.refreshResultsDummy(context, playerIDs)}) {
-//                Text("Find")
-//            }
-//        }
+        Row(verticalAlignment = Alignment.Top) {
+            OutlinedTextField(
+                value = playerIDs,
+                onValueChange = { playerIDs = it },
+                label = { Text("...") },
+                textStyle = TextStyle(color = White),
+                shape = RoundedCornerShape(12.dp)
+            )
+            Button(onClick = {mvm.refreshResultsDummy(context, playerIDs)}) {
+                Text("Find")
+            }
+        }
         LazyColumn(
             modifier = Modifier.fillMaxSize()
         ) {
             items(matchViewModels.sortedBy { matchData -> matchData.match.time }) { matchData ->
 
-                if (((!filterBySelected && matchData.match.time * 1000 + 20000 > System.currentTimeMillis())
+                if (((!filterBySelected && matchData.match.time * 1000 + 20000 >= System.currentTimeMillis())
                             || (filterBySelected && matchData.observableSelected)) && matchData.containsFilter(
                         filterByString
                     )

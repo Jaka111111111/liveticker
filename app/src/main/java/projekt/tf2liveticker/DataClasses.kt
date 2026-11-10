@@ -67,7 +67,8 @@ data class MapData(
     var updated: Boolean = false,
     var mapEnded: Boolean = false,
     var winner: String = "",
-    var lastUpdated: Long = 0
+    var lastUpdated: Long = 0,
+    var mapConsidered: Boolean = false
 )
 @Serializable
 data class Match(

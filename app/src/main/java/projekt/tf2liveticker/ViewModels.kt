@@ -59,7 +59,7 @@ class MainViewModel : ViewModel() {
                 val d = Division(9, "hi", 1, 1)
                 val ms = emptyList<String>()
                 val m = Match(0, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
-                val md = MatchData(m)
+                val md = MatchData(m, mapsNeededToWin = 1, bestOf = 1)
                 val players = playerIDs.split(",")
                 md.team1.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[0]), ""))
                 md.team2.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[1]), ""))
