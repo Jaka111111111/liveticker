@@ -65,8 +65,15 @@ class MatchUpdateWorker(
         } catch (e: Exception) {
 
             e.printStackTrace()
+            NotificationHelper.showNotification(
+                context = applicationContext,
+                title = "Error",
+                message = e.message.toString(),
+                notificationId = matchId
+            )
 
-            Result.failure()
+            Result.retry()
+            //Result.failure()
         }
     }
 

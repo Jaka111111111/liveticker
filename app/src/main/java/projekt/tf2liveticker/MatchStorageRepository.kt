@@ -7,7 +7,7 @@ import androidx.datastore.dataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import projekt.tf2liveticker.MatchData
+import kotlinx.coroutines.selects.select
 
 class MatchStorageRepository(
     private val context: Context
@@ -18,15 +18,14 @@ class MatchStorageRepository(
         }
 
     suspend fun saveMatch(matchData: MatchData) {
-
         context.matchDataStore.updateData { currentData ->
 
-            for (oldMatchData in currentData.MatchData) {
-                if (matchData.match.id == oldMatchData.match.id) {
-                    oldMatchData.match.time = matchData.match.time
-                }
-            } //???
-            if (currentData.MatchData.any { it.match.id == matchData.match.id }) {
+//            for (oldMatchData in currentData.MatchData) {
+//                if (matchData.match.id == oldMatchData.match.id) {
+//                    oldMatchData.match.time = matchData.match.time
+//                }
+//            } //???
+            if (currentData.MatchData.any { it.match.id == matchData.match.id}) {
                 currentData
 
             } else {
@@ -36,6 +35,7 @@ class MatchStorageRepository(
             }
         }
     }
+
 
     suspend fun removeMatch(matchId: Int) {
 
@@ -81,27 +81,9 @@ class MatchStorageRepository(
         return d.MatchData
     }
 
-//    suspend fun getSelectedMatches(): List<MatchData> {
-//        val d = context.matchDataStore.data.first()
-//        val selectedMatches: List<MatchData>
-//        d.MatchData.forEach { md ->
-//            if(md.selected) {
-//                selectedMatches
-//            }
-//        }
-//        return selectedMatches
-//    }
-
     suspend fun updateMatch(updatedMatch: MatchData) {
-        Log.d("STORAGE", "updateMatch gestartet")
-        Log.d("STORAGE", "Match ID: ${updatedMatch.match.id}")
 
         context.matchDataStore.updateData { currentData ->
-
-            Log.d(
-                "STORAGE",
-                "Aktuelle Matches: ${currentData.MatchData.size}"
-            )
 
             val updatedList = currentData.MatchData.map { storedMatch ->
 
@@ -112,17 +94,10 @@ class MatchStorageRepository(
                 }
             }
 
-            Log.d(
-                "STORAGE",
-                "Neue Matches: ${updatedList.size}"
-            )
-
             currentData.copy(
                 MatchData = updatedList
             )
         }
-
-        Log.d("STORAGE", "updateMatch beendet")
 
     }
 
