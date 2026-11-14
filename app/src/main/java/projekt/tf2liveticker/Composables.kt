@@ -202,7 +202,7 @@ fun MatchOverview(matchData: MatchData, mainViewModel: MainViewModel) {
                 matchData.observableSelected = !matchData.observableSelected
                 mainViewModel.selectMatch(
                     context,
-                    MatchData(matchData.match),
+                    matchData,
                     selected = matchData.observableSelected
                 )
             }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xff272f36))

@@ -164,10 +164,11 @@ class MatchRepository() {
         val storageRepository = MatchStorageRepository(context)
         val response = RetrofitEtf2lInstance.etf2l_api.getMatches(page)
         matches = response.results.data
-        for (m in matches) {
-            storageRepository.saveMatch(MatchData(m, team1 = TeamData(), team2 = TeamData()))
-        }
-        storageRepository.addDummyData()
+//        for (m in matches) {
+//            storageRepository.updateMatch(MatchData(m, team1 = TeamData(), team2 = TeamData()))
+//        }
+        storageRepository.updateMatches(matches)
+        //storageRepository.addDummyData()
         matchData = storageRepository.getAllMatches()
     }
 
@@ -178,7 +179,6 @@ class MatchRepository() {
 
         val matchTimeMillis = match.time * 1000L
         var delay = matchTimeMillis - System.currentTimeMillis()
-
 
         if (delay < 0) {
             delay = MsToMinute.seconds30
@@ -194,9 +194,15 @@ class MatchRepository() {
             .setInputData(inputData)
 //            .setConstraints(constraints)
             .build()
-        Log.d(
-            "Schedule Worker", "Worker arbeitet in ${delay.milliseconds.inWholeHours} Stunden, " +
-                    "${delay.milliseconds.inWholeMinutes % 60} Minuten und ${delay.milliseconds.inWholeSeconds % 1200} Sekunden"
+
+        //debug slop
+        NotificationHelper.showNotification(
+            context = context,
+            title = "Neuer Worker",
+            message = "Worker arbeitet in ${delay.milliseconds.inWholeHours} Stunden, " +
+                    "${delay.milliseconds.inWholeMinutes % 60} Minuten und ${delay.milliseconds.inWholeSeconds % 1200} Sekunden",
+            notificationId = match.id,
+            channel = "debug_notifications"
         )
         WorkManager
             .getInstance(context)

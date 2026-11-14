@@ -9,7 +9,7 @@ import kotlin.random.Random
 
 @Serializable
 class MatchData(
-    val match: Match,
+    var match: Match,
     var bestOf: Int = 3,
     var mapsNeededToWin: Int = (bestOf / 2) + 1,
     var team1score: Int = 0,

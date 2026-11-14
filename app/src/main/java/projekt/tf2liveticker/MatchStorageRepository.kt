@@ -1,33 +1,18 @@
 package projekt.tf2liveticker
 
 import android.content.Context
-import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.selects.select
 
 class MatchStorageRepository(
     private val context: Context
 ) {
-    val matchDataList: Flow<List<MatchData>> =
-        context.matchDataStore.data.map { matchDataList ->
-            matchDataList.MatchData
-        }
 
     suspend fun saveMatch(matchData: MatchData) {
         context.matchDataStore.updateData { currentData ->
-
-//            for (oldMatchData in currentData.MatchData) {
-//                if (matchData.match.id == oldMatchData.match.id) {
-//                    oldMatchData.match.time = matchData.match.time
-//                }
-//            } //???
             if (currentData.MatchData.any { it.match.id == matchData.match.id}) {
                 currentData
-
             } else {
                 currentData.copy(
                     MatchData = currentData.MatchData + matchData
@@ -81,13 +66,34 @@ class MatchStorageRepository(
         return d.MatchData
     }
 
-    suspend fun updateMatch(updatedMatch: MatchData) {
-
+    suspend fun selectMatch (matchData: MatchData) {
         context.matchDataStore.updateData { currentData ->
 
             val updatedList = currentData.MatchData.map { storedMatch ->
 
-                if (storedMatch.match.id == updatedMatch.match.id) {
+                if (storedMatch.match.id == matchData.match.id) {
+                    matchData
+                } else {
+                    storedMatch
+                }
+            }
+
+            currentData.copy(
+                MatchData = updatedList
+            )
+        }
+    }
+    suspend fun updateMatch(updatedMatch: MatchData): Boolean {
+        var changed = false
+        context.matchDataStore.updateData { currentData ->
+            val updatedList = currentData.MatchData.map { storedMatch ->
+
+                if (storedMatch.match.id == updatedMatch.match.id)
+                {
+                    if (storedMatch.match.time != updatedMatch.match.time) {
+                        changed = true
+                    }
+                    updatedMatch.selected = storedMatch.selected
                     updatedMatch
                 } else {
                     storedMatch
@@ -98,7 +104,32 @@ class MatchStorageRepository(
                 MatchData = updatedList
             )
         }
+        return changed
+    }
 
+    suspend fun updateMatches(matches: List<Match>) {
+        var matchUpdatedCounter = 0
+        matches.forEach {
+            if (getMatch(it.id) != null) {
+                val changed = updateMatch(MatchData(match = it))
+                if (changed) {
+                    matchUpdatedCounter++
+                }
+            }
+            else {
+                saveMatch(MatchData(match = it))
+                matchUpdatedCounter++
+            }
+        }
+
+        //debug slop
+        NotificationHelper.showNotification(
+            context = context,
+            title = "$matchUpdatedCounter Matches wurden aktualisiert",
+            message = "hi",
+            notificationId = 1,
+            channel = "debug_notifications"
+        )
     }
 
 }
