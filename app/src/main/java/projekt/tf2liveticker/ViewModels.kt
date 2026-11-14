@@ -93,7 +93,7 @@ class MainViewModel : ViewModel() {
                 matchData.selected = selected
                 matchData.observableSelected = selected
                 matchData.getLatestMap().logID = dummylivelog
-                storageRepository.updateMatch(matchData)
+                storageRepository.selectMatch(matchData)
 
                 if (matchData.selected) {
                     repository.scheduleMatch(context, matchData.match)
@@ -101,6 +101,14 @@ class MainViewModel : ViewModel() {
 
             } catch (e: Exception) {
                 error = e.message ?: "Unbekannter Fehler"
+                //debug slop
+                NotificationHelper.showNotification(
+                    context = context,
+                    title = "Fehler",
+                    message = "$error",
+                    notificationId = 2,
+                    channel = "debug_notifications"
+                )
             } finally {
                 loading = false
             }

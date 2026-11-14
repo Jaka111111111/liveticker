@@ -10,18 +10,28 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 object NotificationHelper {
-    val CHANNEL_ID = "match_notifications"
+    val MATCH_CHANNEL_ID = "match_notifications"
+    val DEBUG_CHANNEL_ID = "debug_notifications"
 
-    fun createNotificationChannel(context: Context) {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is not in the Support Library.
+    fun createMatchNotificationChannel(context: Context) {
         val name = "Match Notifications"
         val descriptionText = "Blablabla"
         val importance = NotificationManager.IMPORTANCE_HIGH
-        val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
+        val channel = NotificationChannel(MATCH_CHANNEL_ID, name, importance).apply {
             description = descriptionText
         }
-        // Register the channel with the system.
+        val notificationManager: NotificationManager =
+            context.getSystemService(NotificationManager::class.java) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    fun createDebugNotificationChannel(context: Context) {
+        val name = "Debug Notifications"
+        val descriptionText = "Info über Prozesse"
+        val importance = NotificationManager.IMPORTANCE_HIGH
+        val channel = NotificationChannel(DEBUG_CHANNEL_ID, name, importance).apply {
+            description = descriptionText
+        }
         val notificationManager: NotificationManager =
             context.getSystemService(NotificationManager::class.java) as NotificationManager
         notificationManager.createNotificationChannel(channel)
@@ -31,12 +41,13 @@ object NotificationHelper {
         context: Context,
         title: String,
         message: String,
-        notificationId: Int
+        notificationId: Int,
+        channel: String = MATCH_CHANNEL_ID
     ) {
 
         val notification = NotificationCompat.Builder(
             context,
-            CHANNEL_ID
+            channel
         )
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)

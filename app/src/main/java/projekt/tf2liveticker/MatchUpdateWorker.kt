@@ -69,7 +69,8 @@ class MatchUpdateWorker(
                 context = applicationContext,
                 title = "Error",
                 message = e.message.toString(),
-                notificationId = matchId
+                notificationId = matchId,
+                channel = "debug_notifications"
             )
 
             Result.retry()

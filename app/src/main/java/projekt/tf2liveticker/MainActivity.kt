@@ -11,7 +11,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
 
-        NotificationHelper.createNotificationChannel(this)
+        NotificationHelper.createMatchNotificationChannel(this)
+        NotificationHelper.createDebugNotificationChannel(this)
+
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
 
