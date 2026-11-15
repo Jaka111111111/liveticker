@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter
 
 class CalendarHelper {
     fun buildDateStringDDMMYY(timestamp: Long): String {
-        val sdf =  DateTimeFormatter.ofPattern("dd.MM.yy \n HH:mm")
+        val sdf =  DateTimeFormatter.ofPattern("dd.MM.yy\nHH:mm")
         val timestampAsDateString = sdf
             .withZone(ZoneId.systemDefault())
             .format(java.time.Instant.ofEpochSecond(timestamp)).toString()

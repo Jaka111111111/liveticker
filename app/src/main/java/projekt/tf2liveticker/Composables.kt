@@ -43,7 +43,7 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>()) {
     var filterBySelected by remember { mutableStateOf(false) }
     var filterByString by remember { mutableStateOf("") }
 
-    LaunchedEffect(context) {
+    LaunchedEffect(1) { //context
         mvm.getMatchesFromEtf2l(context)
     }
     Column(
@@ -52,13 +52,10 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>()) {
             .fillMaxSize()
             .background(color = Color(0xff131a1f))
     ) {
-
-
         Row(
             verticalAlignment = Alignment.Top,
             modifier = Modifier.fillMaxWidth()
         ) {
-
             Button(
                 onClick = {
                     filterBySelected = false
@@ -74,12 +71,6 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>()) {
                 }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xff272f36))
             ) {
                 MediumTextWhite("Marked Matches")
-            }
-
-            if (loading) {
-
-                CircularProgressIndicator(color = Color(0xff5D30F6))
-
             }
 
             error?.let {
@@ -114,6 +105,9 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>()) {
             Button(onClick = {mvm.refreshResultsDummy(context, playerIDs)}) {
                 Text("Find")
             }
+        }
+        if (loading) {
+            CircularProgressIndicator(color = White)
         }
         LazyColumn(
             modifier = Modifier.fillMaxSize()
@@ -170,7 +164,8 @@ fun SmallTextWhite(text: String) {
         text = text,
         color = White,
         textAlign = TextAlign.Center,
-        fontSize = 15.sp
+        fontSize = 15.sp,
+        maxLines = 1
     )
 }
 @Composable
@@ -191,11 +186,12 @@ fun MatchOverview(matchData: MatchData, mainViewModel: MainViewModel) {
         MatchTitleText("${matchData.match.clan1.name} vs ${matchData.match.clan2.name}")
 
         MediumTextWhite(matchData.match.competition.name)
+
+        MediumTextWhite(matchData.match.division.name)
         MediumTextWhite(matchData.getDateStringFormatted())
 
         if (matchData.matchEnded) {
             MediumTextWhite(matchData.matchInfoStringBuilder())
-
         }
         Button(
             onClick = {

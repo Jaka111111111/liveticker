@@ -33,7 +33,7 @@ class MatchUpdateWorker(
 
                 repository.refreshResults(matchData)
 
-                if (matchData.getLatestMap().logID != 0) {
+                //if (matchData.getLatestMap().logID != 0) {
                     val latestMap = matchData.getLatestMap()
                     if (latestMap.updated || latestMap.mapEnded) {
 
@@ -41,10 +41,10 @@ class MatchUpdateWorker(
                             context = applicationContext,
                             title = "${matchData.match.clan1.name} vs ${matchData.match.clan2.name}",
                             message = matchData.mapInfoStringBuilder(),
-                            notificationId = latestMap.logID
+                            notificationId = matchId
                         )
                     }
-                }
+                //}
                 //matchData.match.time = (System.currentTimeMillis() / 1000) + 30
                 storageRepository.updateMatch(matchData)
                 if (matchData.matchEnded) {

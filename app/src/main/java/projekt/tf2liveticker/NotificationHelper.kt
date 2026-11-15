@@ -28,7 +28,7 @@ object NotificationHelper {
     fun createDebugNotificationChannel(context: Context) {
         val name = "Debug Notifications"
         val descriptionText = "Info über Prozesse"
-        val importance = NotificationManager.IMPORTANCE_HIGH
+        val importance = NotificationManager.IMPORTANCE_MIN
         val channel = NotificationChannel(DEBUG_CHANNEL_ID, name, importance).apply {
             description = descriptionText
         }
