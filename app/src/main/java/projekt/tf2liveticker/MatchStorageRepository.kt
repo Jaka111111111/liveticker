@@ -123,12 +123,11 @@ class MatchStorageRepository(
         }
 
         //debug slop
-        NotificationHelper.showNotification(
+        NotificationHelper.showDebugNotification(
             context = context,
             title = "$matchUpdatedCounter Matches wurden aktualisiert",
             message = "hi",
-            notificationId = 1,
-            channel = "debug_notifications"
+            notificationId = 1
         )
     }
 

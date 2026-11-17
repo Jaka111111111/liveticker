@@ -31,31 +31,34 @@ class MatchUpdateWorker(
 
             if (matchData.selected) {
 
-                repository.refreshResults(matchData)
+                repository.refreshResults(matchData, applicationContext)
 
                 //if (matchData.getLatestMap().logID != 0) {
-                    val latestMap = matchData.getLatestMap()
-                    if (latestMap.updated || latestMap.mapEnded) {
-
-                        NotificationHelper.showNotification(
-                            context = applicationContext,
-                            title = "${matchData.match.clan1.name} vs ${matchData.match.clan2.name}",
-                            message = matchData.mapInfoStringBuilder(),
-                            notificationId = matchId
-                        )
-                    }
+//                    val latestMap = matchData.getLatestMap()
+//                    if (latestMap.updated || latestMap.mapEnded) {
+//
+//                        NotificationHelper.showNotification(
+//                            context = applicationContext,
+//                            title = "${matchData.match.clan1.name} vs ${matchData.match.clan2.name}",
+//                            message = matchData.mapInfoStringBuilder(),
+//                            notificationId = matchId
+//                        )
+//                    }
                 //}
                 //matchData.match.time = (System.currentTimeMillis() / 1000) + 30
                 storageRepository.updateMatch(matchData)
-                if (matchData.matchEnded) {
-                    NotificationHelper.showNotification(
-                        context = applicationContext,
-                        title = "${matchData.match.clan1.name} vs ${matchData.match.clan2.name} concluded!"
-                                + "\n ${matchData.team1score} - ${matchData.team2score}",
-                        message = matchData.matchInfoStringBuilder(),
-                        notificationId = matchId
-                    )
-                } else {
+//                if (matchData.matchEnded) {
+//                    NotificationHelper.showNotification(
+//                        context = applicationContext,
+//                        title = "${matchData.match.clan1.name} vs ${matchData.match.clan2.name} concluded!"
+//                                + "\n ${matchData.team1score} - ${matchData.team2score}",
+//                        message = matchData.matchInfoStringBuilder(),
+//                        notificationId = matchId
+//                    )
+//                } else {
+//                    repository.scheduleMatch(applicationContext, matchData.match)
+//                }
+                if (!matchData.matchEnded) {
                     repository.scheduleMatch(applicationContext, matchData.match)
                 }
             }
@@ -65,12 +68,11 @@ class MatchUpdateWorker(
         } catch (e: Exception) {
 
             e.printStackTrace()
-            NotificationHelper.showNotification(
+            NotificationHelper.showDebugNotification(
                 context = applicationContext,
                 title = "Error",
                 message = e.message.toString(),
-                notificationId = matchId,
-                channel = "debug_notifications"
+                notificationId = 1
             )
 
             Result.retry()
