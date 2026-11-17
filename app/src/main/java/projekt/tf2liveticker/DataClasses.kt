@@ -26,6 +26,10 @@ data class PlayerLog( //etf2l
     val steam: PlayerSteam?,
     val url: String?
 )
+@Serializable
+data class AppStats(
+    val lastUpdated: Long = 0
+)
 
 @Serializable
 data class Player( //logs

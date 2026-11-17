@@ -4,13 +4,12 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.ui.platform.LocalContext
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
         NotificationHelper.createMatchNotificationChannel(this)
         NotificationHelper.createDebugNotificationChannel(this)
 
@@ -23,8 +22,13 @@ class MainActivity : ComponentActivity() {
             )
         }
 
+
+        val mvm = MainViewModel()
         setContent {
-            MatchScreen()
+            val context = LocalContext.current
+            mvm.getAppStats(context)
+            mvm.getMatchesFromEtf2l(context)
+            MatchScreen(mvm)
         }
 
     }

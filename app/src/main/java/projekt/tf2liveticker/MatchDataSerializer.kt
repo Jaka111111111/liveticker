@@ -33,3 +33,30 @@ object MatchDataSerializer : Serializer<MatchDataList> {
         get() = MatchDataList()
 
 }
+
+object AppStatsSerializer : Serializer<AppStats> {
+
+    override suspend fun readFrom(input: InputStream): AppStats {
+        return try {
+            Json.decodeFromString(deserializer = AppStats.serializer(),
+                string = input.readBytes().decodeToString())
+        } catch (e: SerializationException) {
+            e.printStackTrace()
+            defaultValue
+        }
+    }
+
+    override suspend fun writeTo(
+        t: AppStats,
+        output: OutputStream
+    ) {
+        output.write(
+            Json.encodeToString(t)
+                .encodeToByteArray()
+        )
+    }
+
+    override val defaultValue: AppStats
+        get() = AppStats()
+
+}

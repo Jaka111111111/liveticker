@@ -22,6 +22,7 @@ class MatchStorageRepository(
     }
 
 
+
     suspend fun removeMatch(matchId: Int) {
 
         context.matchDataStore.updateData { currentData ->
@@ -61,11 +62,19 @@ class MatchStorageRepository(
         }
     }
 
+    suspend fun getAppStats(): AppStats {
+        val d = context.appStatStore.data.first()
+        return d
+    }
+
+    suspend fun updateAppStats(appStats: AppStats) {
+        context.appStatStore.updateData { appStats }
+    }
+
     suspend fun getAllMatches(): List<MatchData> {
         val d = context.matchDataStore.data.first()
         return d.MatchData
     }
-
     suspend fun selectMatch (matchData: MatchData) {
         context.matchDataStore.updateData { currentData ->
 
@@ -130,9 +139,11 @@ class MatchStorageRepository(
             notificationId = 1
         )
     }
-
 }
-
+val Context.appStatStore: DataStore<AppStats> by dataStore(
+    fileName = "stats.json",
+    serializer = AppStatsSerializer
+)
 val Context.matchDataStore: DataStore<MatchDataList> by dataStore(
     fileName = "matches.json",
     serializer = MatchDataSerializer

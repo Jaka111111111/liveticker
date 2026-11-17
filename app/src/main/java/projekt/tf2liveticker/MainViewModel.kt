@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
@@ -24,6 +25,9 @@ class MainViewModel : ViewModel() {
     var error by mutableStateOf<String?>(null)
         private set
 
+    var filterBySelected by mutableStateOf(false)
+    var filterByString by mutableStateOf("")
+    var lastUpdated by mutableLongStateOf(0)
     var nextPageToLoad = 1
 
     fun getParticipants(matchData: MatchData) {
@@ -61,8 +65,26 @@ class MainViewModel : ViewModel() {
                 val m = Match(0, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
                 val md = MatchData(m, mapsNeededToWin = 2, bestOf = 3, tiesAllowed = false)
                 val players = playerIDs.split(",")
-                md.team1data.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[0]), ""))
-                md.team2data.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[1]), ""))
+                md.team1data.players = mutableListOf<PlayerLog>(
+                    PlayerLog(
+                        "",
+                        0,
+                        "",
+                        "",
+                        PlayerSteam("", "", "", players[0]),
+                        ""
+                    )
+                )
+                md.team2data.players = mutableListOf<PlayerLog>(
+                    PlayerLog(
+                        "",
+                        0,
+                        "",
+                        "",
+                        PlayerSteam("", "", "", players[1]),
+                        ""
+                    )
+                )
                 selectMatch(context, md, 0)
 
                 repository.refreshResultsDummy(context, playerIDs)
@@ -114,6 +136,48 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    fun getAppStats(context: Context) {
+        viewModelScope.launch {
+            loading = true
+            error = null
+
+            try {
+
+                repository.getAppStats(context)
+
+                lastUpdated = repository.appStats.lastUpdated
+
+            } catch (e: Exception) {
+
+                error = e.message ?: "Unbekannter Fehler"
+
+            } finally {
+
+                loading = false
+            }
+        }
+    }
+
+    fun saveAppStats(context: Context) {
+        viewModelScope.launch {
+            loading = true
+            error = null
+
+            try {
+
+                repository.saveAppStats(context, AppStats(lastUpdated))
+
+            } catch (e: Exception) {
+
+                error = e.message ?: "Unbekannter Fehler"
+
+            } finally {
+
+                loading = false
+            }
+        }
+    }
+
     fun getLocalMatches(context: Context) {
         viewModelScope.launch {
             loading = true
@@ -125,7 +189,7 @@ class MainViewModel : ViewModel() {
 
                 matches = repository.matches
 
-                matchData = repository.matchData
+                matchData = repository.matchDataList
 
                 for (md in matchData) {
                     md.observableSelected = md.selected
@@ -154,12 +218,14 @@ class MainViewModel : ViewModel() {
 
                 matches = repository.matches
 
-                matchData = repository.matchData
+                matchData = repository.matchDataList
 
                 for (md in matchData) {
                     md.observableSelected = md.selected
                 }
 
+                lastUpdated = System.currentTimeMillis()
+                saveAppStats(context)
 
             } catch (e: Exception) {
 

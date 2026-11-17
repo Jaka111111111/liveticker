@@ -10,11 +10,13 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class MatchRepository() {
 
-    var matchData: List<MatchData> = emptyList()
+    var matchDataList: List<MatchData> = emptyList()
         private set
 
     var matches: List<Match> = emptyList()
         private set
+
+    var appStats: AppStats = AppStats()
 
     suspend fun tryRandomCombination(matchData: MatchData): RecentLogResponse {
         val list = matchData.getPlayerCombination()
@@ -131,8 +133,7 @@ class MatchRepository() {
         val players = playerIDs.split(",")
         md.team1data.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[0]), ""))
         md.team2data.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[1]), ""))
-        //md.mutableMapDataList.add(MapData(LogID = 0))
-        this.matchData += md
+        this.matchDataList += md
         val storageRepository =
             MatchStorageRepository(context)
         storageRepository.saveMatch(md)
@@ -142,7 +143,7 @@ class MatchRepository() {
     }
 
     suspend fun refreshResults(matchData: MatchData?, context: Context) {
-        if (matchData!!.selected) { //&& matchData.match.time * 1000L < System.currentTimeMillis()
+        if (matchData!!.selected) {
             if (matchData.getLatestMap().logID == 0) {
                 findLiveLog(matchData)
             }
@@ -155,21 +156,28 @@ class MatchRepository() {
         }
     }
 
+    suspend fun getAppStats(context: Context) {
+        val storageRepository = MatchStorageRepository(context)
+        appStats = storageRepository.getAppStats()
+    }
+
+    suspend fun saveAppStats(context: Context, appStats: AppStats) {
+        val storageRepository = MatchStorageRepository(context)
+        this.appStats = appStats
+        storageRepository.updateAppStats(appStats)
+    }
+
     suspend fun getLocalMatches(context: Context) {
         val storageRepository = MatchStorageRepository(context)
-        matchData = storageRepository.getAllMatches()
+        matchDataList = storageRepository.getAllMatches()
     }
 
     suspend fun getEtf2lMatches(context: Context, page: Int) {
         val storageRepository = MatchStorageRepository(context)
         val response = RetrofitEtf2lInstance.etf2l_api.getMatches(page)
         matches = response.results.data
-//        for (m in matches) {
-//            storageRepository.updateMatch(MatchData(m, team1 = TeamData(), team2 = TeamData()))
-//        }
         storageRepository.updateMatches(matches)
-        //storageRepository.addDummyData()
-        matchData = storageRepository.getAllMatches()
+        matchDataList = storageRepository.getAllMatches()
     }
 
     fun scheduleMatch(
@@ -183,16 +191,12 @@ class MatchRepository() {
         if (delay < 0) {
             delay = MsToMinute.SECONDS_60
         }
-//        val constraints = Constraints.Builder()
-//            .setRequiredNetworkType(NetworkType.CONNECTED)
-//            .build()
         val inputData = workDataOf(
             "MATCH_ID" to match.id
         )
         val request = OneTimeWorkRequestBuilder<MatchUpdateWorker>()
             .setInitialDelay(delay, TimeUnit.MILLISECONDS) //DELAY
             .setInputData(inputData)
-//            .setConstraints(constraints)
             .build()
 
         //debug slop
