@@ -59,10 +59,10 @@ class MainViewModel : ViewModel() {
                 val d = Division(9, "hi", 1, 1)
                 val ms = emptyList<String>()
                 val m = Match(0, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
-                val md = MatchData(m, mapsNeededToWin = 1, bestOf = 1)
+                val md = MatchData(m, mapsNeededToWin = 2, bestOf = 3, tiesAllowed = false)
                 val players = playerIDs.split(",")
-                md.team1.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[0]), ""))
-                md.team2.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[1]), ""))
+                md.team1data.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[0]), ""))
+                md.team2data.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[1]), ""))
                 selectMatch(context, md, 0)
 
                 repository.refreshResultsDummy(context, playerIDs)
@@ -102,12 +102,11 @@ class MainViewModel : ViewModel() {
             } catch (e: Exception) {
                 error = e.message ?: "Unbekannter Fehler"
                 //debug slop
-                NotificationHelper.showNotification(
+                NotificationHelper.showDebugNotification(
                     context = context,
                     title = "Fehler",
                     message = "$error",
-                    notificationId = 2,
-                    channel = "debug_notifications"
+                    notificationId = 2
                 )
             } finally {
                 loading = false

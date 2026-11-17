@@ -1,5 +1,6 @@
 package projekt.tf2liveticker
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,8 +15,8 @@ class MatchData(
     var mapsNeededToWin: Int = (bestOf / 2) + 1,
     var team1score: Int = 0,
     var team2score: Int = 0,
-    val team1: TeamData = TeamData(id = match.clan1.id),
-    val team2: TeamData = TeamData(id = match.clan2.id),
+    val team1data: TeamData = TeamData(id = match.clan1.id),
+    val team2data: TeamData = TeamData(id = match.clan2.id),
     var selected: Boolean = false,
     var matchEnded: Boolean = false,
     var dateString: String = "",
@@ -29,8 +30,7 @@ class MatchData(
     fun logIDNotInUse(LogID: Int): Boolean {
         if (mutableMapDataList.isEmpty()) {
             return true
-        }
-        else {
+        } else {
             for (map in mutableMapDataList) {
                 if (map.logID == LogID) {
                     return false
@@ -39,6 +39,7 @@ class MatchData(
             return true
         }
     }
+
     fun getDateStringFormatted(): String {
         if (this.dateString == "") {
             this.dateString = CalendarHelper().buildDateStringDDMMYY(match.time)
@@ -55,44 +56,56 @@ class MatchData(
         }
     }
 
-    fun mapInfoStringBuilder(mapData: MapData = getLatestMap()): String {
-        val minutes = if (mapData.length / 60 < 10) {
-            "0"
-        } else {
-            ""
-        } + mapData.length / 60
-        val seconds = if (mapData.length % 60 < 10) {
-            "0"
-        } else {
-            ""
-        } + mapData.length % 60 //arrrrrgh
-        val mapScore =
-            (if (mapData.blueTeamID == this.team1.id) {
-                mapData.blueScore.toString() + " - " + mapData.redScore
+    fun mapInfoStringBuilder(mapData: MapData = getLatestMap()) {
+        if (mapData.logID == 0) {
+            mapData.infoString = "Looking for log for map " + mutableMapDataList.size + "..."
+        }
+        else {
+            val minutes = if (mapData.length / 60 < 10) {
+                "0"
             } else {
-                mapData.redScore.toString() + " - " + mapData.blueScore
-            })
-        val ended = (if (mapData.mapEnded) {
-            " final score on " + mapData.name + " after "
-        } else {
-            " score on "+ mapData.name +" after "
-        }) + minutes + ":" + seconds
-        return mapScore + ended + mapEndedReason
+                ""
+            } + mapData.length / 60
+            val seconds = if (mapData.length % 60 < 10) {
+                "0"
+            } else {
+                ""
+            } + mapData.length % 60 //arrrrrgh
+
+            val isLeading = if (mapData.mapEnded) {
+                " won "
+            } else {
+                " is leading "
+            }
+
+            val mapScore =
+                (if (mapData.blueScore > mapData.redScore) {
+                    if (mapData.blueTeamID == this.team1data.id) {
+                        this.match.clan1.name
+                    } else {
+                        this.match.clan2.name
+                    } + isLeading + mapData.blueScore.toString() + " - " + mapData.redScore
+                } else if (mapData.blueScore < mapData.redScore) {
+                    if (mapData.redTeamID == this.team1data.id) {
+                        this.match.clan1.name
+                    } else {
+                        this.match.clan2.name
+                    } + isLeading + mapData.redScore.toString() + " - " + mapData.blueScore
+                } else {
+                    "tied " + mapData.blueScore.toString() + " - " + mapData.redScore
+                })
+            val mapInfo = " on " + mapData.name + " after " + minutes + ":" + seconds
+
+            mapData.infoString = "$mapScore$mapInfo $mapEndedReason"
+        }
     }
+
 
     fun matchInfoStringBuilder(): String {
         var matchInfo = ""
         mutableMapDataList.forEach {
-            if (it.winner != "tie") {
-                matchInfo += it.winner + " won on " + it.name + " " + "" +
-                        (if (it.blueScore > it.redScore) {
-                            it.blueScore.toString() + " - " + it.redScore
-                        } else {
-                            it.redScore.toString() + " - " + it.blueScore
-                        }) + "\n"
-            } else {
-                matchInfo += it.name + " tied: " + it.redScore.toString() + " - " + it.blueScore
-            }
+            mapInfoStringBuilder(it)
+            matchInfo += "\n" + it.infoString
         }
         return matchInfo
     }
@@ -107,7 +120,7 @@ class MatchData(
         }
     }
 
-    suspend fun updateMapScore() {
+    suspend fun updateMapScore(context: Context) {
 
         var latestMap = getLatestMap()
 
@@ -131,17 +144,20 @@ class MatchData(
         latestMap.redScore = response.teams["Red"]?.score!!
         latestMap.blueScore = response.teams["Blue"]?.score!!
 
+        if (latestMap.updated) {
+            buildNotification(context)
+        }
 
         if (latestMap.redScore == 5 || latestMap.blueScore == 5) {
             latestMap.mapEnded = true
             this.mapEndedReason = "ScoreLimitReached"
         }
 
-        if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.minutes5) {
+        if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.MINUTES_05) {
             checkRecentLogs()
         }
 
-        if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.minutes30) {
+        if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.MINUTES_30) {
             latestMap.mapEnded = true
             this.mapEndedReason = "TimeoutReached"
         }
@@ -149,16 +165,29 @@ class MatchData(
         if (latestMap.mapEnded) {
             if (!latestMap.mapConsidered) {
                 latestMap.mapConsidered = true
-                updateMatchScore(latestMap)
+                updateMatchScore(latestMap, context)
             }
         }
 
+    }
 
+    fun buildNotification(context: Context) {
+        NotificationHelper.showMatchNotification(
+            context = context,
+            title = if (matchEnded) {
+                "${match.clan1.name} vs ${match.clan2.name} concluded! \n $team1score - $team2score"
+            } else {
+                "${match.clan1.name} vs ${match.clan2.name} \n $team1score - $team2score"
+            },
+            message = matchInfoStringBuilder(),
+            notificationId = match.id,
+            onGoing = !matchEnded
+        )
     }
 
     fun updateTeamForColor(color: String, mapData: MapData) {
         if (color == "red") {
-            if (this.team1.id == mapData.redTeamID) {
+            if (this.team1data.id == mapData.redTeamID) {
                 this.team1score++
                 mapData.winner = this.match.clan1.name
             } else {
@@ -166,7 +195,7 @@ class MatchData(
                 mapData.winner = this.match.clan2.name
             }
         } else {
-            if (this.team1.id == mapData.blueTeamID) {
+            if (this.team1data.id == mapData.blueTeamID) {
                 this.team1score++
                 mapData.winner = this.match.clan1.name
             } else {
@@ -176,49 +205,45 @@ class MatchData(
         }
     }
 
-    fun updateMatchScore(mapData: MapData) {
+    fun updateMatchScore(mapData: MapData, context: Context) {
 
-            if (mapData.redScore == mapData.blueScore) {
-                mapData.winner = "tie"
-                if (this.tiesAllowed) {
-                    team1score++
-                    team2score++
-                }
-            } else if (mapData.redScore > mapData.blueScore) {
-                updateTeamForColor("red", mapData)
-            } else {
-                updateTeamForColor("blue", mapData)
+        if (mapData.redScore == mapData.blueScore) {
+            mapData.winner = "tie"
+            if (this.tiesAllowed) {
+                team1score++
+                team2score++
             }
+        } else if (mapData.redScore > mapData.blueScore) {
+            updateTeamForColor("red", mapData)
+        } else {
+            updateTeamForColor("blue", mapData)
+        }
 
-            if (team1score == mapsNeededToWin
-                || team2score == mapsNeededToWin
-            ) {
-                matchEnded = true
-            } else {
-                mutableMapDataList.add(MapData())
-            }
+        if (team1score == mapsNeededToWin
+            || team2score == mapsNeededToWin
+        ) {
+            matchEnded = true
+        }
+        buildNotification(context)
+
+        if (!matchEnded) {
+            mutableMapDataList.add(MapData())
+        }
 
     }
 
     fun getPlayerCombination(): List<PlayerLog> {
-
-        var playerList: List<PlayerLog> = emptyList()
-//        for (player in team2.players+team1.players) {
-//            if (player.role == "Leader") {
-//                playerList.apply { player }
-//            }
-        //}
-        Log.d("getPlayerCombination", "team 1: ${team1.players}")
-        Log.d("getPlayerCombination", "team 2: ${team2.players}")
-        if (team1.players.size == 1 && team2.players.size == 1) { //testing purposes :DDD
+        Log.d("getPlayerCombination", "team 1: ${team1data.players}")
+        Log.d("getPlayerCombination", "team 2: ${team2data.players}")
+        if (team1data.players.size == 1 && team2data.players.size == 1) { //testing purposes :DDD
             return listOf(
-                team1.players[0],
-                team2.players[0]
+                team1data.players[0],
+                team2data.players[0]
             )
         } else {
             return listOf(
-                team1.players[Random.nextInt(team1.players.size - 1)],
-                team2.players[Random.nextInt(team2.players.size - 1)]
+                team1data.players[Random.nextInt(team1data.players.size - 1)],
+                team2data.players[Random.nextInt(team2data.players.size - 1)]
             )
         }
 

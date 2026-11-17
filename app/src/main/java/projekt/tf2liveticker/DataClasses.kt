@@ -4,16 +4,17 @@ import kotlinx.serialization.Serializable
 import kotlin.Int
 
 object MsToMinute {
-    val minutes30: Long = 1800000
-    val minutes10: Long = 600000
-    val minutes5: Long = 300000
-    val minute1: Long = 60000
-    val seconds30: Long = 30000
+    const val MINUTES_30: Long = 1800000
+    const val MINUTES_10: Long = 600000
+    const val MINUTES_05: Long = 300000
+    const val MINUTE_01: Long = 60000
+    const val SECONDS_30: Long = 30000
+    const val SECONDS_60: Long = 60000
 }
 
 object SecToMinute {
-    val minutes4: Long = 240
-    val minutes5: Long = 300
+    const val MINUTES_04: Long = 240
+    const val MINUTES_05: Long = 300
 }
 
 @Serializable
@@ -51,7 +52,6 @@ data class MatchDataList(
 )
 
 @Serializable data class TeamData(
-    var name: String = "",
     var id: Int = 0,
     var players: List<PlayerLog> = emptyList()
 )
@@ -68,6 +68,7 @@ data class MapData(
     var mapEnded: Boolean = false,
     var winner: String = "",
     var lastUpdated: Long = 0,
+    var infoString: String = "",
     var mapConsidered: Boolean = false
 )
 @Serializable

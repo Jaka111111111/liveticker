@@ -185,14 +185,18 @@ fun MatchOverview(matchData: MatchData, mainViewModel: MainViewModel) {
     {
         MatchTitleText("${matchData.match.clan1.name} vs ${matchData.match.clan2.name}")
 
+        if (matchData.match.time*1000 < System.currentTimeMillis() && matchData.selected) {
+            MatchTitleText("${matchData.team1score} - ${matchData.team2score}")
+        }
+
         MediumTextWhite(matchData.match.competition.name)
 
         MediumTextWhite(matchData.match.division.name)
         MediumTextWhite(matchData.getDateStringFormatted())
 
-        if (matchData.matchEnded) {
+//        if (matchData.matchEnded) {
             MediumTextWhite(matchData.matchInfoStringBuilder())
-        }
+   //     }
         Button(
             onClick = {
                 matchData.observableSelected = !matchData.observableSelected

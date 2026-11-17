@@ -37,23 +37,58 @@ object NotificationHelper {
         notificationManager.createNotificationChannel(channel)
     }
 
-    fun showNotification(
+    fun showMatchNotification(
         context: Context,
         title: String,
         message: String,
         notificationId: Int,
-        channel: String = MATCH_CHANNEL_ID
+        onGoing: Boolean = true
     ) {
 
         val notification = NotificationCompat.Builder(
             context,
-            channel
+            MATCH_CHANNEL_ID
         )
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(message)
             .setStyle(NotificationCompat.BigTextStyle())
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(false)
+            .setOngoing(onGoing)
+            .build()
+
+        if (
+            ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+
+        NotificationManagerCompat
+            .from(context)
+            .notify(notificationId, notification)
+    }
+
+
+    fun showDebugNotification(
+        context: Context,
+        title: String,
+        message: String,
+        notificationId: Int
+    ) {
+
+        val notification = NotificationCompat.Builder(
+            context,
+            DEBUG_CHANNEL_ID
+        )
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle())
+            .setPriority(NotificationCompat.PRIORITY_MIN)
             .setAutoCancel(false)
             .build()
 

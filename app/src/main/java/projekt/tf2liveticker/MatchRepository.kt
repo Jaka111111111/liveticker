@@ -26,7 +26,7 @@ class MatchRepository() {
 
         if (matchData.mutableMapDataList.last().logID == 0) {
 
-            if (matchData.team1.players.isEmpty() || matchData.team2.players.isEmpty()) {
+            if (matchData.team1data.players.isEmpty() || matchData.team2data.players.isEmpty()) {
                 getParticipants(matchData)
             }
 
@@ -72,7 +72,7 @@ class MatchRepository() {
                     players.forEach { player ->
                         val id = player.steam3Id
 
-                        matchData.team1.players.forEach { //später ändern!!!!
+                        matchData.team1data.players.forEach { //später ändern!!!!
 
                             Log.d("findLiveLog", "Verglichen mit: $id")
                             val steam = it.steam
@@ -81,24 +81,24 @@ class MatchRepository() {
                             if ("[U:1:${steam3?.minus(76561197960265728)}]" == id) {     //it.steam?.id3 == id) {
                                 if (player.team == "Red") { //case sensitive..
                                     matchData.mutableMapDataList.last().redTeamID =
-                                        matchData.team1.id
+                                        matchData.team1data.id
                                     matchData.mutableMapDataList.last().blueTeamID =
-                                        matchData.team2.id
+                                        matchData.team2data.id
                                 }
                                 relevantPlayerCounter++
                             }
                         }
 
-                        matchData.team2.players.forEach {
+                        matchData.team2data.players.forEach {
                             if ("[U:1:${
                                     it.steam?.id64?.toLong()?.minus(76561197960265728)
                                 }]" == id
                             ) { //it.steam?.id3 == id) {
                                 if (player.team == "Red") {
                                     matchData.mutableMapDataList.last().redTeamID =
-                                        matchData.team2.id
+                                        matchData.team2data.id
                                     matchData.mutableMapDataList.last().blueTeamID =
-                                        matchData.team1.id
+                                        matchData.team1data.id
                                 }
                                 relevantPlayerCounter++
                             }
@@ -109,7 +109,7 @@ class MatchRepository() {
 
                     if (relevantPlayerCounter >= 8
                         ||
-                        relevantPlayerCounter == (matchData.team2.players.size + matchData.team1.players.size)
+                        relevantPlayerCounter == (matchData.team2data.players.size + matchData.team1data.players.size)
                     ) {
                         matchData.mutableMapDataList.last().logID = randomPlayerRequest.logs[0].id
                         matchData.mutableMapDataList.last().name = randomPlayerRequest.logs[0].map
@@ -126,11 +126,11 @@ class MatchRepository() {
         val d = Division(9, "hi", 1, 1)
         val ms = emptyList<String>()
         val m = Match(0, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
-        val md = MatchData(m, bestOf = 1, mapsNeededToWin = 1, team1 = TeamData(name = "BBBB", id = 0), team2 = TeamData(name = "A",id = 1))
+        val md = MatchData(m, bestOf = 1, mapsNeededToWin = 1, team1data = TeamData(id = 0), team2data = TeamData(id = 1))
         md.selected = true
         val players = playerIDs.split(",")
-        md.team1.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[0]), ""))
-        md.team2.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[1]), ""))
+        md.team1data.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[0]), ""))
+        md.team2data.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[1]), ""))
         //md.mutableMapDataList.add(MapData(LogID = 0))
         this.matchData += md
         val storageRepository =
@@ -141,7 +141,7 @@ class MatchRepository() {
 
     }
 
-    suspend fun refreshResults(matchData: MatchData?) {
+    suspend fun refreshResults(matchData: MatchData?, context: Context) {
         if (matchData!!.selected) { //&& matchData.match.time * 1000L < System.currentTimeMillis()
             if (matchData.getLatestMap().logID == 0) {
                 findLiveLog(matchData)
@@ -149,7 +149,7 @@ class MatchRepository() {
             val latest = matchData.mutableMapDataList.last()
             if (latest.logID != 0 && (System.currentTimeMillis() - latest.lastUpdated) > 30000) {
 
-                matchData.updateMapScore()
+                matchData.updateMapScore(context)
 
             }
         }
@@ -181,7 +181,7 @@ class MatchRepository() {
         var delay = matchTimeMillis - System.currentTimeMillis()
 
         if (delay < 0) {
-            delay = MsToMinute.seconds30
+            delay = MsToMinute.SECONDS_60
         }
 //        val constraints = Constraints.Builder()
 //            .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -196,13 +196,12 @@ class MatchRepository() {
             .build()
 
         //debug slop
-        NotificationHelper.showNotification(
+        NotificationHelper.showDebugNotification(
             context = context,
             title = "Neuer Worker",
             message = "Worker arbeitet in ${delay.milliseconds.inWholeHours} Stunden, " +
                     "${delay.milliseconds.inWholeMinutes % 60} Minuten und ${delay.milliseconds.inWholeSeconds % 1200} Sekunden",
-            notificationId = match.id,
-            channel = "debug_notifications"
+            notificationId = 1
         )
         WorkManager
             .getInstance(context)
@@ -212,9 +211,9 @@ class MatchRepository() {
     suspend fun getParticipants(matchData: MatchData) {
 
         val team1 = RetrofitEtf2lInstance.etf2l_api.getTeam(id = matchData.match.clan1.id)
-        matchData.team1.players = team1.team.players
+        matchData.team1data.players = team1.team.players
         val team2 = RetrofitEtf2lInstance.etf2l_api.getTeam(id = matchData.match.clan2.id)
-        matchData.team2.players = team2.team.players
+        matchData.team2data.players = team2.team.players
 
     }
 
