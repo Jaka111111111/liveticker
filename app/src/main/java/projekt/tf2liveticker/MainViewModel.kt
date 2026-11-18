@@ -1,13 +1,17 @@
 package projekt.tf2liveticker
 
 import android.content.Context
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import projekt.tf2liveticker.MatchData
+import kotlin.collections.List
 
 class MainViewModel : ViewModel() {
 
@@ -16,7 +20,7 @@ class MainViewModel : ViewModel() {
     var matchData by mutableStateOf<List<MatchData>>(emptyList())
         private set
 
-    var matches by mutableStateOf<List<Match>>(emptyList())
+    var filteredMatchData by mutableStateOf<List<MatchData>>(matchData)
         private set
 
     var loading by mutableStateOf(false)
@@ -29,6 +33,18 @@ class MainViewModel : ViewModel() {
     var filterByString by mutableStateOf("")
     var lastUpdated by mutableLongStateOf(0)
     var nextPageToLoad = 1
+
+    fun applyFilter() {
+        var helpList = mutableListOf<MatchData>()
+        for (matchData in matchData) {
+            if (((!filterBySelected && matchData.match.time * 1000 + 20000 >= System.currentTimeMillis()) ||
+                        (filterBySelected && matchData.observableSelected)) && matchData.containsFilter(filterByString)
+            ) {
+                helpList.add(matchData)
+            }
+        }
+        filteredMatchData = helpList
+    }
 
     fun getParticipants(matchData: MatchData) {
         viewModelScope.launch {
@@ -184,11 +200,9 @@ class MainViewModel : ViewModel() {
             error = null
 
             try {
-
-                repository.getLocalMatches(context)
-
-                matches = repository.matches
-
+                if (repository.matchDataList.size == 0) {
+                    repository.getLocalMatches(context)
+                }
                 matchData = repository.matchDataList
 
                 for (md in matchData) {
@@ -201,7 +215,7 @@ class MainViewModel : ViewModel() {
                 error = e.message ?: "Unbekannter Fehler"
 
             } finally {
-
+                applyFilter()
                 loading = false
             }
         }
@@ -215,26 +229,18 @@ class MainViewModel : ViewModel() {
             try {
 
                 repository.getEtf2lMatches(context, page)
-
-                matches = repository.matches
-
-                matchData = repository.matchDataList
-
-                for (md in matchData) {
-                    md.observableSelected = md.selected
-                }
-
                 lastUpdated = System.currentTimeMillis()
                 saveAppStats(context)
+                getLocalMatches(context)
 
             } catch (e: Exception) {
-
                 error = e.message ?: "Unbekannter Fehler"
-
+                getLocalMatches(context)
             } finally {
-
                 loading = false
             }
         }
+
+
     }
 }
