@@ -2,7 +2,10 @@ package projekt.tf2liveticker
 
 import android.content.Context
 import android.util.Log
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import java.util.concurrent.TimeUnit
@@ -197,19 +200,21 @@ class MatchRepository() {
         val request = OneTimeWorkRequestBuilder<MatchUpdateWorker>()
             .setInitialDelay(delay, TimeUnit.MILLISECONDS) //DELAY
             .setInputData(inputData)
+            .addTag("LiveTicker")
             .build()
 
         //debug slop
-        NotificationHelper.showDebugNotification(
-            context = context,
-            title = "Neuer Worker",
-            message = "Worker arbeitet in ${delay.milliseconds.inWholeHours} Stunden, " +
-                    "${delay.milliseconds.inWholeMinutes % 60} Minuten und ${delay.milliseconds.inWholeSeconds % 1200} Sekunden",
-            notificationId = 1
-        )
+//        NotificationHelper.showDebugNotification(
+//            context = context,
+//            title = "Neuer Worker",
+//            message = "Worker arbeitet in ${delay.milliseconds.inWholeHours} Stunden, " +
+//                    "${delay.milliseconds.inWholeMinutes % 60} Minuten und ${delay.milliseconds.inWholeSeconds % 1200} Sekunden",
+//            notificationId = 1
+//        )
         WorkManager
             .getInstance(context)
-            .enqueue(request)
+            .enqueueUniqueWork("Match_" + match.id, ExistingWorkPolicy.REPLACE, request)
+
     }
 
     suspend fun getParticipants(matchData: MatchData) {

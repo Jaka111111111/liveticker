@@ -1,7 +1,10 @@
 package projekt.tf2liveticker
 
 import android.content.Context
+import android.util.Log
+import androidx.work.Configuration
 import androidx.work.CoroutineWorker
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 
 class MatchUpdateWorker(
@@ -18,53 +21,21 @@ class MatchUpdateWorker(
             "MATCH_ID",
             -1
         )
-
         if (matchId == -1) {
             return Result.failure()
         }
-
         return try {
-
             val matchData = storageRepository.getMatch(matchId)
                 ?: return Result.failure()
-
-
             if (matchData.selected) {
-
                 repository.refreshResults(matchData, applicationContext)
-
-                //if (matchData.getLatestMap().logID != 0) {
-//                    val latestMap = matchData.getLatestMap()
-//                    if (latestMap.updated || latestMap.mapEnded) {
-//
-//                        NotificationHelper.showNotification(
-//                            context = applicationContext,
-//                            title = "${matchData.match.clan1.name} vs ${matchData.match.clan2.name}",
-//                            message = matchData.mapInfoStringBuilder(),
-//                            notificationId = matchId
-//                        )
-//                    }
-                //}
-                //matchData.match.time = (System.currentTimeMillis() / 1000) + 30
                 storageRepository.updateMatch(matchData)
-//                if (matchData.matchEnded) {
-//                    NotificationHelper.showNotification(
-//                        context = applicationContext,
-//                        title = "${matchData.match.clan1.name} vs ${matchData.match.clan2.name} concluded!"
-//                                + "\n ${matchData.team1score} - ${matchData.team2score}",
-//                        message = matchData.matchInfoStringBuilder(),
-//                        notificationId = matchId
-//                    )
-//                } else {
-//                    repository.scheduleMatch(applicationContext, matchData.match)
-//                }
+
                 if (!matchData.matchEnded) {
                     repository.scheduleMatch(applicationContext, matchData.match)
                 }
             }
-
             Result.success()
-
         } catch (e: Exception) {
 
             e.printStackTrace()
@@ -76,7 +47,6 @@ class MatchUpdateWorker(
             )
 
             Result.retry()
-            //Result.failure()
         }
     }
 

@@ -96,7 +96,7 @@ class MatchData(
                 })
             val mapInfo = " on " + mapData.name + " after " + minutes + ":" + seconds
 
-            mapData.infoString = "$mapScore$mapInfo $mapEndedReason"
+            mapData.infoString = "$mapScore$mapInfo $mapEndedReason" + if(mapData.mapEnded) {"\n"} else {""}
         }
     }
 
@@ -105,7 +105,7 @@ class MatchData(
         var matchInfo = ""
         mutableMapDataList.forEach {
             mapInfoStringBuilder(it)
-            matchInfo += "\n" + it.infoString
+            matchInfo += it.infoString
         }
         return matchInfo
     }

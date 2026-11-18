@@ -56,6 +56,7 @@ object NotificationHelper {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(false)
             .setOngoing(onGoing)
+            .setOnlyAlertOnce(true)
             .build()
 
         if (
@@ -80,29 +81,29 @@ object NotificationHelper {
         notificationId: Int
     ) {
 
-        val notification = NotificationCompat.Builder(
-            context,
-            DEBUG_CHANNEL_ID
-        )
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(title)
-            .setContentText(message)
-            .setStyle(NotificationCompat.BigTextStyle())
-            .setPriority(NotificationCompat.PRIORITY_MIN)
-            .setAutoCancel(false)
-            .build()
-
-        if (
-            ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
-
-        NotificationManagerCompat
-            .from(context)
-            .notify(notificationId, notification)
+//        val notification = NotificationCompat.Builder(
+//            context,
+//            DEBUG_CHANNEL_ID
+//        )
+//            .setSmallIcon(R.drawable.ic_launcher_foreground)
+//            .setContentTitle(title)
+//            .setContentText(message)
+//            .setStyle(NotificationCompat.BigTextStyle())
+//            .setPriority(NotificationCompat.PRIORITY_MIN)
+//            .setAutoCancel(false)
+//            .build()
+//
+//        if (
+//            ActivityCompat.checkSelfPermission(
+//                context,
+//                Manifest.permission.POST_NOTIFICATIONS
+//            ) != PackageManager.PERMISSION_GRANTED
+//        ) {
+//            return
+//        }
+//
+//        NotificationManagerCompat
+//            .from(context)
+//            .notify(notificationId, notification)
     }
 }
