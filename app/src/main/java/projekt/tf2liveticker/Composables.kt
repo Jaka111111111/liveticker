@@ -2,12 +2,15 @@ package projekt.tf2liveticker
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,17 +37,32 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
+fun ProgressIndicator(loading: Boolean) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        if (loading) {
+            CircularProgressIndicator(
+                color = ComposableColors.highlightText,
+                modifier = Modifier.wrapContentSize(align = Alignment.Center) //
+            )
+        }
+    }
+}
+@Composable
 fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>()) {
-    val matchViewModels = mvm.matchData
+    val matchViewModels = mvm.filteredMatchData
     val loading = mvm.loading
     val error = mvm.error
     val context = LocalContext.current
     var playerIDs by remember { mutableStateOf("") }
 
+    LaunchedEffect(context) { //context
+        mvm.getAppStats(context);
+        mvm.getMatchesFromEtf2l(context);
+    }
 
-//    LaunchedEffect(1) { //context
-//        mvm.getAppStats(context)
-//    }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -58,7 +76,7 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>()) {
             Button(
                 onClick = {
                     mvm.filterBySelected = false
-                        mvm.getLocalMatches(context)
+                    mvm.applyFilter()
                 }, colors = ButtonDefaults.buttonColors(ComposableColors.buttonUnclicked)
             ) {
                 MediumTextWhite("Upcoming Matches")
@@ -67,6 +85,7 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>()) {
             Button(
                 onClick = {
                     mvm.filterBySelected = true
+                    mvm.applyFilter()
                 }, colors = ButtonDefaults.buttonColors(ComposableColors.buttonUnclicked)
             ) {
                 MediumTextWhite("Marked Matches")
@@ -87,46 +106,35 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>()) {
                     .padding(horizontal = 10.dp),
                 value = mvm.filterByString,
                 singleLine = true,
-                onValueChange = { mvm.filterByString = it },
+                onValueChange = { mvm.filterByString = it; mvm.applyFilter() } ,
                 label = { SmallText("Search for team, division or competition names") },
                 textStyle = TextStyle(color = ComposableColors.regularText, fontSize = 15.sp),
                 shape = RoundedCornerShape(12.dp)
             )
         }
-//        Row(verticalAlignment = Alignment.Top) {
-//            OutlinedTextField(
-//                value = playerIDs,
-//                onValueChange = { playerIDs = it },
-//                label = { Text("...") },
-//                textStyle = TextStyle(color = ComposableColors.regularText),
-//                shape = RoundedCornerShape(12.dp)
-//            )
-//            Button(onClick = {mvm.refreshResultsDummy(context, playerIDs)}) {
-//                Text("Find")
-//            }
-//        }
+        Row(verticalAlignment = Alignment.Top) {
+            OutlinedTextField(
+                value = playerIDs,
+                onValueChange = { playerIDs = it },
+                label = { Text("...") },
+                textStyle = TextStyle(color = ComposableColors.regularText),
+                shape = RoundedCornerShape(12.dp)
+            )
+            Button(onClick = {mvm.refreshResultsDummy(context, playerIDs)}) {
+                Text("Find")
+            }
+        }
 
         SmallCursiveText("last updated: " + CalendarHelper().buildRelativeDayString(mvm.lastUpdated / 1000))
-
-        if (loading) {
-            CircularProgressIndicator(color = ComposableColors.regularText)
-        }
 
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(20.dp),
             modifier = Modifier.fillMaxSize()
         ) {
             items(matchViewModels.sortedBy { matchData -> matchData.match.time }) { matchData ->
-
-                if (((!mvm.filterBySelected && matchData.match.time * 1000 + 20000 >= System.currentTimeMillis())
-                            || (mvm.filterBySelected && matchData.observableSelected)) && matchData.containsFilter(
-                        mvm.filterByString
-                    )
-                ) {
                     MatchOverview(
                         matchData = matchData, mvm
                     )
-                }
             }
             item {
                 if (!mvm.filterBySelected && matchViewModels.isNotEmpty()) {
@@ -141,6 +149,8 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>()) {
                 }
             }
         }
+
+        ProgressIndicator(loading)
 
     }
 }
@@ -222,9 +232,10 @@ fun MatchOverview(matchData: MatchData, mainViewModel: MainViewModel) {
                 mainViewModel.selectMatch(
                     context,
                     matchData,
-                    selected = matchData.observableSelected
+                    selected = matchData.observableSelected,
                 )
-            }, colors = ButtonDefaults.buttonColors(ComposableColors.buttonUnclicked)
+            }, colors = ButtonDefaults.buttonColors(ComposableColors.getButtonColor(matchData.observableSelected)),
+            modifier = Modifier.padding(5.dp)
         ) {
             if (matchData.observableSelected) {
                 MediumTextWhite("Dont care")
@@ -233,4 +244,5 @@ fun MatchOverview(matchData: MatchData, mainViewModel: MainViewModel) {
             }
         }
     }
+
 }
