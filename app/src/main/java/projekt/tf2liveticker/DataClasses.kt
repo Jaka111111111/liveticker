@@ -1,5 +1,8 @@
 package projekt.tf2liveticker
 
+import androidx.work.WorkInfo
+import com.google.common.util.concurrent.ListenableFuture
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlin.Int
 
@@ -28,7 +31,9 @@ data class PlayerLog( //etf2l
 )
 @Serializable
 data class AppStats(
-    val lastUpdated: Long = 0
+    val lastUpdated: Long = 0,
+//    @Contextual
+//    val workerInfo: ListenableFuture<List<WorkInfo>> = emptyList<WorkInfo>()
 )
 
 @Serializable
@@ -113,11 +118,6 @@ data class Division(
     val name: String,
     val skill_contrib: Int,
     val tier: Int
-)
-
-data class ApiResponse(
-    val results: Results,
-    val team: Team,
 )
 
 data class TeamResponse(

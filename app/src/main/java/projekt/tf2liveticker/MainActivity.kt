@@ -25,9 +25,6 @@ class MainActivity : ComponentActivity() {
 
         val mvm = MainViewModel()
         setContent {
-            val context = LocalContext.current
-            mvm.getAppStats(context)
-            mvm.getMatchesFromEtf2l(context)
             MatchScreen(mvm)
         }
 
