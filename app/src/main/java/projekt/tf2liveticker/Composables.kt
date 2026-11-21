@@ -1,12 +1,11 @@
 package projekt.tf2liveticker
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -77,7 +76,7 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>()) {
                 onClick = {
                     mvm.filterBySelected = false
                     mvm.applyFilter()
-                }, colors = ButtonDefaults.buttonColors(ComposableColors.buttonUnclicked)
+                }, colors = ButtonDefaults.buttonColors(ComposableColors.getButtonColor(!mvm.filterBySelected))
             ) {
                 MediumTextWhite("Upcoming Matches")
             }
@@ -85,8 +84,9 @@ fun MatchScreen(mvm: MainViewModel = viewModel<MainViewModel>()) {
             Button(
                 onClick = {
                     mvm.filterBySelected = true
+                    mvm.filterByString = ""
                     mvm.applyFilter()
-                }, colors = ButtonDefaults.buttonColors(ComposableColors.buttonUnclicked)
+                }, colors = ButtonDefaults.buttonColors(ComposableColors.getButtonColor(mvm.filterBySelected))
             ) {
                 MediumTextWhite("Marked Matches")
             }
@@ -161,7 +161,7 @@ fun BigTitleText(text: String) {
         color = ComposableColors.highlightText,
         textAlign = TextAlign.Center,
         fontSize = 25.sp,
-        modifier = Modifier.padding(all = 15.dp)
+        modifier = Modifier.padding(all = 5.dp)
     )
 }
 @Composable
@@ -201,13 +201,16 @@ fun SmallCursiveText(text: String) {
 fun MatchOverview(matchData: MatchData, mainViewModel: MainViewModel) {
 
     val context = LocalContext.current
+    var expanded by remember { mutableStateOf(false)}
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12))
             .background(ComposableColors.itemFill)
-            ,
+            .clickable(
+                enabled = true,
+                onClick = {expanded = !expanded}),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     )
@@ -223,9 +226,18 @@ fun MatchOverview(matchData: MatchData, mainViewModel: MainViewModel) {
         MediumTextWhite(matchData.match.division.name)
         MediumTextWhite(matchData.getDateStringFormatted())
 
-//        if (matchData.matchEnded) {
+        if (matchData.matchStarted()) {
             MediumTextWhite(matchData.matchInfoStringBuilder())
-   //     }
+        }
+
+        if (expanded) {
+            matchData.match.maps.forEach {
+                MediumTextWhite(it)
+            }
+            MediumTextWhite("Best of " + matchData.bestOf.toString())
+            MediumTextWhite(if (matchData.mapTiesAllowed) {"Ties are possible"} else {"Ties are not possible"})
+        }
+
         Button(
             onClick = {
                 matchData.observableSelected = !matchData.observableSelected
