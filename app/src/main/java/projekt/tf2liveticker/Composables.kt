@@ -34,6 +34,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import projekt.tf2liveticker.helper_classes.CalendarHelper
+import projekt.tf2liveticker.helper_classes.ComposableColors
 
 @Composable
 fun ProgressIndicator(loading: Boolean) {

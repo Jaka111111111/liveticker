@@ -1,26 +1,24 @@
 package projekt.tf2liveticker
 
 import android.content.Context
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import projekt.tf2liveticker.MatchData
+import projekt.tf2liveticker.helper_classes.NotificationHelper
 import kotlin.collections.List
 
 class MainViewModel : ViewModel() {
 
     private val repository = MatchRepository()
 
-    var matchData by mutableStateOf<List<MatchData>>(emptyList())
+    var matchDataList by mutableStateOf<List<MatchData>>(emptyList())
         private set
 
-    var filteredMatchData by mutableStateOf<List<MatchData>>(matchData)
+    var filteredMatchData by mutableStateOf<List<MatchData>>(matchDataList)
         private set
 
     var loading by mutableStateOf(false)
@@ -36,12 +34,10 @@ class MainViewModel : ViewModel() {
 
     fun applyFilter() {
         var helpList = mutableListOf<MatchData>()
-        for (matchData in matchData) {
-            if (((!filterBySelected && matchData.match.time * 1000 + 20000 >= System.currentTimeMillis()) ||
-                        (filterBySelected && matchData.observableSelected)) && matchData.containsFilter(filterByString)
-            ) {
-                helpList.add(matchData)
-            }
+        matchDataList.forEach {
+            if (((!filterBySelected && it.match.time * 1000 + MinuteToMS.MINUTES_30 >= System.currentTimeMillis()) ||
+                    (filterBySelected && it.observableSelected)) && it.containsFilter(filterByString))
+            helpList.add(it)
         }
         filteredMatchData = helpList
     }
@@ -79,7 +75,7 @@ class MainViewModel : ViewModel() {
                 val d = Division(9, "hi", 1, 1)
                 val ms = emptyList<String>()
                 val m = Match(0, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
-                val md = MatchData(m, mapsNeededToWin = 2, bestOf = 3, tiesAllowed = false)
+                val md = MatchData(m, mapsNeededToWin = 2, bestOf = 3, mapTiesAllowed = false)
                 val players = playerIDs.split(",")
                 md.team1data.players = mutableListOf<PlayerLog>(
                     PlayerLog(
@@ -161,7 +157,7 @@ class MainViewModel : ViewModel() {
 
                 repository.getAppStats(context)
 
-                lastUpdated = repository.appStats.lastUpdated
+                lastUpdated = repository.appSettings.lastUpdated
 
             } catch (e: Exception) {
 
@@ -181,7 +177,7 @@ class MainViewModel : ViewModel() {
 
             try {
 
-                repository.saveAppStats(context, AppStats(lastUpdated))
+                repository.saveAppStats(context, AppSettings(lastUpdated))
 
             } catch (e: Exception) {
 
@@ -200,12 +196,12 @@ class MainViewModel : ViewModel() {
             error = null
 
             try {
-                if (repository.matchDataList.size == 0) {
+                if (repository.matchDataList.isEmpty()) {
                     repository.getLocalMatches(context)
                 }
-                matchData = repository.matchDataList
+                matchDataList = repository.matchDataList
 
-                for (md in matchData) {
+                for (md in matchDataList) {
                     md.observableSelected = md.selected
                 }
 

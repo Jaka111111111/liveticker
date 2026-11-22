@@ -2,14 +2,7 @@ package projekt.tf2liveticker
 
 import android.content.Context
 import android.util.Log
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.workDataOf
-import java.util.concurrent.TimeUnit
-import kotlin.time.Duration.Companion.milliseconds
+import projekt.tf2liveticker.alarm_manager.AlarmScheduler
 
 class MatchRepository() {
 
@@ -19,7 +12,7 @@ class MatchRepository() {
     var matches: List<Match> = emptyList()
         private set
 
-    var appStats: AppStats = AppStats()
+    var appSettings: AppSettings = AppSettings()
 
     suspend fun tryRandomCombination(matchData: MatchData): RecentLogResponse {
         val list = matchData.getPlayerCombination()
@@ -161,13 +154,13 @@ class MatchRepository() {
 
     suspend fun getAppStats(context: Context) {
         val storageRepository = MatchStorageRepository(context)
-        appStats = storageRepository.getAppStats()
+        appSettings = storageRepository.getAppStats()
     }
 
-    suspend fun saveAppStats(context: Context, appStats: AppStats) {
+    suspend fun saveAppStats(context: Context, appSettings: AppSettings) {
         val storageRepository = MatchStorageRepository(context)
-        this.appStats = appStats
-        storageRepository.updateAppStats(appStats)
+        this.appSettings = appSettings
+        storageRepository.updateAppStats(appSettings)
     }
 
     suspend fun getLocalMatches(context: Context) {
@@ -192,28 +185,20 @@ class MatchRepository() {
         var delay = matchTimeMillis - System.currentTimeMillis()
 
         if (delay < 0) {
-            delay = MsToMinute.SECONDS_60
+            delay = MinuteToMS.SECONDS_60
         }
-        val inputData = workDataOf(
-            "MATCH_ID" to match.id
-        )
-        val request = OneTimeWorkRequestBuilder<MatchUpdateWorker>()
-            .setInitialDelay(delay, TimeUnit.MILLISECONDS) //DELAY
-            .setInputData(inputData)
-            .addTag("LiveTicker")
-            .build()
 
-        //debug slop
-//        NotificationHelper.showDebugNotification(
-//            context = context,
-//            title = "Neuer Worker",
-//            message = "Worker arbeitet in ${delay.milliseconds.inWholeHours} Stunden, " +
-//                    "${delay.milliseconds.inWholeMinutes % 60} Minuten und ${delay.milliseconds.inWholeSeconds % 1200} Sekunden",
-//            notificationId = 1
-//        )
-        WorkManager
-            .getInstance(context)
-            .enqueueUniqueWork("Match_" + match.id, ExistingWorkPolicy.REPLACE, request)
+        AlarmScheduler().scheduleMatchAlarm(context, matchTimeMillis + MinuteToMS.SECONDS_60)
+
+//        val request = OneTimeWorkRequestBuilder<MatchUpdateWorker>()
+//            .setInitialDelay(delay, TimeUnit.MILLISECONDS) //DELAY
+//            .setInputData(inputData)
+//            .addTag("LiveTicker")
+//            .build()
+//
+//        WorkManager
+//            .getInstance(context)
+//            .enqueueUniqueWork("Match_" + match.id, ExistingWorkPolicy.REPLACE, request)
 
     }
 

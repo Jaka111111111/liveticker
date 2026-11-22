@@ -6,12 +6,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.serialization.Serializable
+import projekt.tf2liveticker.helper_classes.CalendarHelper
+import projekt.tf2liveticker.helper_classes.NotificationHelper
 import kotlin.random.Random
 
 @Serializable
 class MatchData(
     var match: Match,
-    var bestOf: Int = 3,
+    var bestOf: Int = match.maps.size,
     var mapsNeededToWin: Int = (bestOf / 2) + 1,
     var team1score: Int = 0,
     var team2score: Int = 0,
@@ -20,13 +22,17 @@ class MatchData(
     var selected: Boolean = false,
     var matchEnded: Boolean = false,
     var dateString: String = "",
-    var tiesAllowed: Boolean = true,
-    var workerActive: Boolean = false,
-    var mapEndedReason: String = ""
+    var mapTiesAllowed: Boolean = true,
+    var matchTiesAllowed: Boolean = true,
+    var mapEndedReason: String = "",
+    var mapsPlayed: Int = 0
 ) {
     var observableSelected by mutableStateOf(false)
     var mutableMapDataList = mutableListOf<MapData>()
 
+    fun matchStarted(): Boolean {
+        return (System.currentTimeMillis() > match.time*1000)
+    }
     fun logIDNotInUse(LogID: Int): Boolean {
         if (mutableMapDataList.isEmpty()) {
             return true
@@ -46,7 +52,6 @@ class MatchData(
         }
         return this.dateString
     }
-
     fun getLatestMap(): MapData {
         if (mutableMapDataList.isEmpty()) {
             mutableMapDataList.add(MapData())
@@ -96,7 +101,7 @@ class MatchData(
                 })
             val mapInfo = " on " + mapData.name + " after " + minutes + ":" + seconds
 
-            mapData.infoString = "$mapScore$mapInfo $mapEndedReason" + if(mapData.mapEnded) {"\n"} else {""}
+            mapData.infoString = "$mapScore$mapInfo" + if(mapData.mapEnded) {"\n"} else {""}
         }
     }
 
@@ -153,11 +158,11 @@ class MatchData(
             this.mapEndedReason = "ScoreLimitReached"
         }
 
-        if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.MINUTES_05) {
+        if (System.currentTimeMillis() - latestMap.lastUpdated > MinuteToMS.MINUTES_05) {
             checkRecentLogs()
         }
 
-        if (System.currentTimeMillis() - latestMap.lastUpdated > MsToMinute.MINUTES_30) {
+        if (System.currentTimeMillis() - latestMap.lastUpdated > MinuteToMS.MINUTES_30) {
             latestMap.mapEnded = true
             this.mapEndedReason = "TimeoutReached"
         }
@@ -165,6 +170,7 @@ class MatchData(
         if (latestMap.mapEnded) {
             if (!latestMap.mapConsidered) {
                 latestMap.mapConsidered = true
+                mapsPlayed++
                 updateMatchScore(latestMap, context)
             }
         }
@@ -188,18 +194,18 @@ class MatchData(
     fun updateTeamForColor(color: String, mapData: MapData) {
         if (color == "red") {
             if (this.team1data.id == mapData.redTeamID) {
-                this.team1score++
+                this.team1score ++
                 mapData.winner = this.match.clan1.name
             } else {
-                this.team2score++
+                this.team2score ++
                 mapData.winner = this.match.clan2.name
             }
         } else {
             if (this.team1data.id == mapData.blueTeamID) {
-                this.team1score++
+                this.team1score ++
                 mapData.winner = this.match.clan1.name
             } else {
-                this.team2score++
+                this.team2score ++
                 mapData.winner = this.match.clan1.name
             }
         }
@@ -209,7 +215,7 @@ class MatchData(
 
         if (mapData.redScore == mapData.blueScore) {
             mapData.winner = "tie"
-            if (this.tiesAllowed) {
+            if (this.mapTiesAllowed) {
                 team1score++
                 team2score++
             }
@@ -218,12 +224,16 @@ class MatchData(
         } else {
             updateTeamForColor("blue", mapData)
         }
-
         if (team1score == mapsNeededToWin
             || team2score == mapsNeededToWin
         ) {
             matchEnded = true
         }
+
+        if (this.matchTiesAllowed && mapsPlayed == bestOf) {
+            matchEnded = true
+        }
+
         buildNotification(context)
 
         if (!matchEnded) {

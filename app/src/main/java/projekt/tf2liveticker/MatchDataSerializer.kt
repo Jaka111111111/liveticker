@@ -34,11 +34,11 @@ object MatchDataSerializer : Serializer<MatchDataList> {
 
 }
 
-object AppStatsSerializer : Serializer<AppStats> {
+object AppStatsSerializer : Serializer<AppSettings> {
 
-    override suspend fun readFrom(input: InputStream): AppStats {
+    override suspend fun readFrom(input: InputStream): AppSettings {
         return try {
-            Json.decodeFromString(deserializer = AppStats.serializer(),
+            Json.decodeFromString(deserializer = AppSettings.serializer(),
                 string = input.readBytes().decodeToString())
         } catch (e: SerializationException) {
             e.printStackTrace()
@@ -47,7 +47,7 @@ object AppStatsSerializer : Serializer<AppStats> {
     }
 
     override suspend fun writeTo(
-        t: AppStats,
+        t: AppSettings,
         output: OutputStream
     ) {
         output.write(
@@ -56,7 +56,7 @@ object AppStatsSerializer : Serializer<AppStats> {
         )
     }
 
-    override val defaultValue: AppStats
-        get() = AppStats()
+    override val defaultValue: AppSettings
+        get() = AppSettings()
 
 }

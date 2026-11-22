@@ -1,12 +1,9 @@
 package projekt.tf2liveticker
 
-import androidx.work.WorkInfo
-import com.google.common.util.concurrent.ListenableFuture
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlin.Int
 
-object MsToMinute {
+object MinuteToMS {
     const val MINUTES_30: Long = 1800000
     const val MINUTES_10: Long = 600000
     const val MINUTES_05: Long = 300000
@@ -30,8 +27,9 @@ data class PlayerLog( //etf2l
     val url: String?
 )
 @Serializable
-data class AppStats(
+data class AppSettings(
     val lastUpdated: Long = 0,
+    val followedTeamsID: List<Int> = emptyList()
 //    @Contextual
 //    val workerInfo: ListenableFuture<List<WorkInfo>> = emptyList<WorkInfo>()
 )
@@ -100,7 +98,6 @@ data class Clan(
 @Serializable
 data class Team(
     val id: Int,
-    //val name: String,
     val country: String?,
     val competitions: Map<String, Competition>,
     val players: List<PlayerLog>

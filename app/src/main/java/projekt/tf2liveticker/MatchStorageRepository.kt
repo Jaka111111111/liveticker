@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import projekt.tf2liveticker.helper_classes.NotificationHelper
 
 class MatchStorageRepository(
     private val context: Context
@@ -62,19 +64,36 @@ class MatchStorageRepository(
         }
     }
 
-    suspend fun getAppStats(): AppStats {
+    suspend fun getAppStats(): AppSettings {
         val d = context.appStatStore.data.first()
         return d
     }
 
-    suspend fun updateAppStats(appStats: AppStats) {
-        context.appStatStore.updateData { appStats }
+    suspend fun updateAppStats(appSettings: AppSettings) {
+        context.appStatStore.updateData { appSettings }
     }
 
     suspend fun getAllMatches(): List<MatchData> {
         val d = context.matchDataStore.data.first()
         return d.MatchData
     }
+
+    suspend fun getActiveMatches(): ArrayList<MatchData> {
+        val d = context.matchDataStore.data.first()
+        var activeMatches = ArrayList<MatchData>()
+        d.MatchData.forEach { currentData ->
+            if (
+                   currentData.selected
+                &&!currentData.matchEnded)
+            {
+                if (currentData.matchStarted()) {
+                    activeMatches.add(currentData)
+                }
+            }
+        }
+        return activeMatches
+    }
+
     suspend fun selectMatch (matchData: MatchData) {
         context.matchDataStore.updateData { currentData ->
 
@@ -140,7 +159,7 @@ class MatchStorageRepository(
         )
     }
 }
-val Context.appStatStore: DataStore<AppStats> by dataStore(
+val Context.appStatStore: DataStore<AppSettings> by dataStore(
     fileName = "stats.json",
     serializer = AppStatsSerializer
 )

@@ -2,6 +2,8 @@ package projekt.tf2liveticker
 
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import projekt.tf2liveticker.api_callers.Etf2l_API
+import projekt.tf2liveticker.api_callers.Log_API
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
