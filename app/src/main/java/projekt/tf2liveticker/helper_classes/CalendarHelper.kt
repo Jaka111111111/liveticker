@@ -1,5 +1,6 @@
-package projekt.tf2liveticker
+package projekt.tf2liveticker.helper_classes
 
+import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -8,7 +9,7 @@ class CalendarHelper {
         val sdf =  DateTimeFormatter.ofPattern("dd.MM.yy\nHH:mm")
         val timestampAsDateString = sdf
             .withZone(ZoneId.systemDefault())
-            .format(java.time.Instant.ofEpochSecond(timestamp)).toString()
+            .format(Instant.ofEpochSecond(timestamp)).toString()
         return timestampAsDateString
     }
 
@@ -16,7 +17,7 @@ class CalendarHelper {
         val sdf =  DateTimeFormatter.ofPattern("HH:mm")
         val timestampAsDateString = sdf
             .withZone(ZoneId.systemDefault())
-            .format(java.time.Instant.ofEpochSecond(timestamp)).toString()
+            .format(Instant.ofEpochSecond(timestamp)).toString()
         return getRelativeDay(timestamp) + timestampAsDateString
     }
 

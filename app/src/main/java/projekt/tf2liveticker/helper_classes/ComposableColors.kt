@@ -1,4 +1,4 @@
-package projekt.tf2liveticker
+package projekt.tf2liveticker.helper_classes
 
 import androidx.compose.ui.graphics.Color
 

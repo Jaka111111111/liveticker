@@ -1,5 +1,7 @@
-package projekt.tf2liveticker
+package projekt.tf2liveticker.api_callers
 
+import projekt.tf2liveticker.LogResponse
+import projekt.tf2liveticker.RecentLogResponse
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
