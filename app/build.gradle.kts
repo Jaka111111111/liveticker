@@ -54,6 +54,7 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.11.2")
     implementation("com.squareup.okhttp3:logging-interceptor:5.1.0")
     implementation("dev.chrisbanes.accompanist:accompanist-coil:0.6.1")
+    implementation(libs.firebase.crashlytics.buildtools)
     //implementation(libs.androidx.runtime)
     testImplementation(libs.junit)
     implementation(libs.androidx.core.ktx)
