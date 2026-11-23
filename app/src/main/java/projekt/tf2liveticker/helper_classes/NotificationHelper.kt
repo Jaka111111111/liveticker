@@ -15,6 +15,7 @@ import projekt.tf2liveticker.R
 object NotificationHelper {
     const val MATCH_CHANNEL_ID = "match_notifications"
     const val DEBUG_CHANNEL_ID = "debug_notifications"
+    const val FOREGROUND_CHANNEL_ID = "foreground_notifications"
 
     fun createMatchNotificationChannel(context: Context) {
         val name = "Match Notifications"
@@ -33,6 +34,18 @@ object NotificationHelper {
         val descriptionText = "Info über Prozesse"
         val importance = NotificationManager.IMPORTANCE_MIN
         val channel = NotificationChannel(DEBUG_CHANNEL_ID, name, importance).apply {
+            description = descriptionText
+        }
+        val notificationManager: NotificationManager =
+            context.getSystemService(NotificationManager::class.java) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    fun createForegroundNotificationChannel(context: Context) {
+        val name = "Foreground Service Notifications"
+        val descriptionText = "Used for the Foreground Service Notification"
+        val importance = NotificationManager.IMPORTANCE_MIN
+        val channel = NotificationChannel(FOREGROUND_CHANNEL_ID, name, importance).apply {
             description = descriptionText
         }
         val notificationManager: NotificationManager =
@@ -111,11 +124,12 @@ object NotificationHelper {
     }
 
     fun showForegroundNotification(context: Context): Notification {
-        return NotificationCompat.Builder(context, MATCH_CHANNEL_ID)
-            .setContentTitle("Updating Matches")
-            .setContentText("Looking through logs and Etf2l teams")
+        return NotificationCompat.Builder(context, FOREGROUND_CHANNEL_ID)
+            .setContentTitle("TF2 Live Ticker is running...")
+            .setContentText("Looking through logs and team pages")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_MIN)
             .build()
     }
 }

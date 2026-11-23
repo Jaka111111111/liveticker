@@ -97,7 +97,7 @@ class MainViewModel : ViewModel() {
                         ""
                     )
                 )
-                selectMatch(context, md, 0)
+                //selectMatch(context, md, 0)
 
                 repository.refreshResultsDummy(context, playerIDs)
 

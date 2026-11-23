@@ -125,10 +125,10 @@ class MatchRepository() {
         val com = Competition("Placeholder", 2, "Placeholder", "6v6")
         val d = Division(9, "hi", 1, 1)
         val ms = emptyList<String>()
-        val m = Match(0, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
+        val players = playerIDs.split(",")
+        val m = Match(matchDataList.size, c1, c2, com, d, ms, "1", System.currentTimeMillis() / 1000)
         val md = MatchData(m, bestOf = 1, mapsNeededToWin = 1, team1data = TeamData(id = 0), team2data = TeamData(id = 1))
         md.selected = true
-        val players = playerIDs.split(",")
         md.team1data.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[0]), ""))
         md.team2data.players = mutableListOf<PlayerLog>(PlayerLog("", 0, "", "", PlayerSteam("", "", "", players[1]), ""))
         this.matchDataList += md

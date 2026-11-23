@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.app.AlarmManager
+import android.util.Log
 
 
 class AlarmScheduler {
@@ -22,6 +23,8 @@ class AlarmScheduler {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+
+        Log.d("AlarmScheduler", "Alarm gesetzt für $triggerAtMillis")
 
         alarmManager.setExactAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP,

@@ -16,6 +16,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         NotificationHelper.createMatchNotificationChannel(this)
         NotificationHelper.createDebugNotificationChannel(this)
+        NotificationHelper.createForegroundNotificationChannel(this)
 
         //openAppSettings()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -24,15 +25,12 @@ class MainActivity : ComponentActivity() {
                 arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
                 100
             )
-
-            requestPermissions(
-                arrayOf(android.Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS),
-                200
-            ) //???
         }
 
 
         val mvm = MainViewModel()
+        mvm.getAppStats(applicationContext);
+        mvm.getMatchesFromEtf2l(applicationContext);
         setContent {
             MatchScreen(mvm)
         }

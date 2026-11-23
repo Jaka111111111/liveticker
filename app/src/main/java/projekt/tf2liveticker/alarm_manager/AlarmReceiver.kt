@@ -6,7 +6,7 @@ import android.content.Intent
 import androidx.core.content.ContextCompat
 import projekt.tf2liveticker.MatchForegroundService
 
-class AlarmReceiver: BroadcastReceiver() {
+class AlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, p1: Intent?) {
         val serviceIntent = Intent(
@@ -14,13 +14,10 @@ class AlarmReceiver: BroadcastReceiver() {
             MatchForegroundService::class.java
         )
 
-
         ContextCompat.startForegroundService(
             context,
             serviceIntent
         )
+
     }
-
-
-
 }
