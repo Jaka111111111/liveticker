@@ -3,6 +3,8 @@ package projekt.tf2liveticker
 import android.content.Context
 import android.util.Log
 import projekt.tf2liveticker.alarm_manager.AlarmScheduler
+import projekt.tf2liveticker.api_callers.RetrofitEtf2lInstance
+import projekt.tf2liveticker.api_callers.RetrofitLogInstance
 
 class MatchRepository() {
 

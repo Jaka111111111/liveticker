@@ -7,11 +7,13 @@ import android.content.pm.ServiceInfo
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.ServiceCompat
+import androidx.work.ListenableWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import projekt.tf2liveticker.helper_classes.NotificationHelper
 
 
@@ -44,8 +46,26 @@ class MatchForegroundService()
 
         serviceScope.launch {
             try {
+                val storageRepository = MatchStorageRepository(applicationContext!!)
 
-                MatchWorkerManager().runWorkers()
+                val repository = MatchRepository()
+                var matchesToUpdate = storageRepository.getActiveMatches()
+                while (matchesToUpdate.isNotEmpty()) {
+                    matchesToUpdate.forEach {
+
+                        if (it.selected) {
+                            repository.refreshResults(it, applicationContext)
+                            storageRepository.updateMatch(it)
+
+                        }
+                    }
+                    withContext(Dispatchers.IO) {
+                        Thread.sleep(MinuteToMS.MINUTE_01)
+                    }
+                    matchesToUpdate = storageRepository.getActiveMatches()
+                }
+                ListenableWorker.Result.success()
+
 
             } catch (e: Exception) {
                 Log.e("MatchService", "Match-Abfrage fehlgeschlagen", e)
