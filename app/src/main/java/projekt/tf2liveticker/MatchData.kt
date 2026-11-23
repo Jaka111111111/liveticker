@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.serialization.Serializable
+import projekt.tf2liveticker.api_callers.RetrofitLogInstance
 import projekt.tf2liveticker.helper_classes.CalendarHelper
 import projekt.tf2liveticker.helper_classes.NotificationHelper
 import kotlin.random.Random
