@@ -4,8 +4,10 @@ import android.app.Notification
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.core.app.ServiceCompat
 import androidx.work.ListenableWorker
 import kotlinx.coroutines.CoroutineScope
@@ -32,6 +34,7 @@ class MatchForegroundService()
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onStartCommand(
         intent: Intent?,
         flags: Int,

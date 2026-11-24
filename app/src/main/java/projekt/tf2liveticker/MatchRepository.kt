@@ -17,7 +17,7 @@ class MatchRepository() {
     var appSettings: AppSettings = AppSettings()
 
     suspend fun tryRandomCombination(matchData: MatchData): RecentLogResponse {
-        val list = matchData.getPlayerCombination()
+        val list = matchData.getPlayerCombinationFromTeams()
         Log.d("findLiveLog", "Spieler: ${list[0].name} ${list[0].steam?.id64}") //und ${list[1].name}")
         return RetrofitLogInstance.log_api.getRecentLogs(list[0].steam?.id64) //+ "," + list[1].steam?.id64)
     }
@@ -69,7 +69,7 @@ class MatchRepository() {
                     Log.d("findLiveLog", players.size.toString())
 
 
-                    players.forEach { player ->
+                    players.forEach { player -> //extrahieren!!
                         val id = player.steam3Id
 
                         matchData.team1data.players.forEach { //später ändern!!!!
@@ -86,6 +86,7 @@ class MatchRepository() {
                                         matchData.team2data.id
                                 }
                                 relevantPlayerCounter++
+                                matchData.participatingPlayers.add(it)
                             }
                         }
 
@@ -101,6 +102,7 @@ class MatchRepository() {
                                         matchData.team1data.id
                                 }
                                 relevantPlayerCounter++
+                                matchData.participatingPlayers.add(it)
                             }
                         }
                     }
@@ -183,14 +185,12 @@ class MatchRepository() {
         match: Match,
     ) {
 
-        val matchTimeMillis = match.time * 1000L
-        var delay = matchTimeMillis - System.currentTimeMillis()
-
-        if (delay < 0) {
-            delay = MinuteToMS.SECONDS_60
+        var matchTimeMillis = match.time * 1000L
+        if (matchTimeMillis < System.currentTimeMillis()) {
+            matchTimeMillis = System.currentTimeMillis()
         }
 
-        AlarmScheduler().scheduleMatchAlarm(context, matchTimeMillis + MinuteToMS.SECONDS_60)
+        AlarmScheduler().scheduleMatchAlarm(context, matchTimeMillis)
 
 //        val request = OneTimeWorkRequestBuilder<MatchUpdateWorker>()
 //            .setInitialDelay(delay, TimeUnit.MILLISECONDS) //DELAY

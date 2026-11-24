@@ -26,7 +26,8 @@ class MatchData(
     var mapTiesAllowed: Boolean = true,
     var matchTiesAllowed: Boolean = true,
     var mapEndedReason: String = "",
-    var mapsPlayed: Int = 0
+    var mapsPlayed: Int = 0,
+    var participatingPlayers: ArrayList<PlayerLog> = ArrayList<PlayerLog>()
 ) {
     var observableSelected by mutableStateOf(false)
     var mutableMapDataList = mutableListOf<MapData>()
@@ -117,7 +118,7 @@ class MatchData(
     }
 
     suspend fun checkRecentLogs() {
-        val randID = getPlayerCombination()[0].steam?.id64
+        val randID = getRandomParticipant().steam?.id64
         val response = RetrofitLogInstance.log_api.getRecentLogs(randID)
         Log.d("checkRecentLogs", "${response.logs.first()}")
         if (response.logs.first().id > getLatestMap().logID) {
@@ -243,7 +244,11 @@ class MatchData(
 
     }
 
-    fun getPlayerCombination(): List<PlayerLog> {
+    fun getRandomParticipant(): PlayerLog {
+        return participatingPlayers[Random.nextInt(participatingPlayers.size-1)]
+    }
+
+    fun getPlayerCombinationFromTeams(): List<PlayerLog> {
         Log.d("getPlayerCombination", "team 1: ${team1data.players}")
         Log.d("getPlayerCombination", "team 2: ${team2data.players}")
         if (team1data.players.size == 1 && team2data.players.size == 1) { //testing purposes :DDD
