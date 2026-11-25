@@ -137,7 +137,6 @@ class MatchData(
 
         if (latestMap.length != response.length) {
             latestMap.updated = true
-            //latestMap.lastUpdated = System.currentTimeMillis()
 
             if (response.teams["Red"]?.score!! + response.teams["Blue"]?.score!! == latestMap.redScore + latestMap.blueScore
                 && response.rounds.last().winner != null

@@ -22,8 +22,11 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
 
             requestPermissions(
-                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
-                100
+                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS,
+                    android.Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                    android.Manifest.permission.FOREGROUND_SERVICE_DATA_SYNC,
+                    android.Manifest.permission.SCHEDULE_EXACT_ALARM),
+                100,
             )
         }
 
